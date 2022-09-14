@@ -36,7 +36,7 @@ func (h *ElasticsearchHandlerImpl) LicenseEnableBasic() (err error) {
 		return err
 	}
 
-	if data["eligible_to_start_basic"] != nil && data["eligible_to_start_basic"].(bool) == false {
+	if data["eligible_to_start_basic"] != nil && !data["eligible_to_start_basic"].(bool) {
 		h.log.Infof("Basic license is already enabled")
 		return nil
 	}

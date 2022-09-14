@@ -56,7 +56,6 @@ func standartDiff(actual, expected any, log *logrus.Entry, ignore map[string]any
 }
 
 func ignoreDiff(c *ucfg.Config, ignore map[string]any) (err error) {
-	if ignore != nil {
 		for key, value := range ignore {
 			hasField, err := c.Has(key, -1, ucfg.PathSep("."))
 			if err != nil {
@@ -74,25 +73,21 @@ func ignoreDiff(c *ucfg.Config, ignore map[string]any) (err error) {
 						if err != nil {
 							return err
 						}
-						break
 					case string:
 						v, err = c.String(key, -1, ucfg.PathSep("."))
 						if err != nil {
 							return err
 						}
-						break
 					case int64:
 						v, err = c.Int(key, -1, ucfg.PathSep("."))
 						if err != nil {
 							return err
 						}
-						break
 					case float64:
 						v, err = c.Float(key, -1, ucfg.PathSep("."))
 						if err != nil {
 							return err
 						}
-						break
 					default:
 						return errors.Errorf("Type %T not supported", t)
 					}
@@ -108,17 +103,21 @@ func ignoreDiff(c *ucfg.Config, ignore map[string]any) (err error) {
 					if err != nil {
 						return err
 					}
-					c.Remove(key, -1, ucfg.PathSep("."))
+					if _, err = c.Remove(key, -1, ucfg.PathSep(".")); err != nil {
+						return err
+					}
 					nb := len(child.GetFields())
 					// Remove parent if no children
 					if nb == 0 {
-						c.Remove(childPath, -1, ucfg.PathSep("."))
+						if _, err = c.Remove(childPath, -1, ucfg.PathSep(".")); err != nil {
+							return err
+						}
 					}
 
 				}
 			}
 		}
-	}
+	
 
 	return nil
 }

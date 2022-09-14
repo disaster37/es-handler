@@ -40,7 +40,7 @@ func (t *ElasticsearchHandlerTestSuite) TestLicenseGet() {
 
 	// When error
 	httpmock.RegisterResponder("GET", urlLicense, httpmock.NewErrorResponder(errors.New("fack error")))
-	license, err = t.esHandler.LicenseGet()
+	_, err = t.esHandler.LicenseGet()
 	assert.Error(t.T(), err)
 }
 

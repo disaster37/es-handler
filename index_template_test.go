@@ -43,7 +43,7 @@ func (t *ElasticsearchHandlerTestSuite) TestIndexTemplateGet() {
 
 	// When error
 	httpmock.RegisterResponder("GET", urlIndexTemplate, httpmock.NewErrorResponder(errors.New("fack error")))
-	resp, err = t.esHandler.IndexTemplateGet("test")
+	_, err = t.esHandler.IndexTemplateGet("test")
 	assert.Error(t.T(), err)
 }
 

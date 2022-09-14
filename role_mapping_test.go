@@ -43,7 +43,7 @@ func (t *ElasticsearchHandlerTestSuite) TestRoleMappingGet() {
 
 	// When error
 	httpmock.RegisterResponder("GET", urlRoleMapping, httpmock.NewErrorResponder(errors.New("fack error")))
-	resp, err = t.esHandler.RoleMappingGet("test")
+	_, err = t.esHandler.RoleMappingGet("test")
 	assert.Error(t.T(), err)
 }
 

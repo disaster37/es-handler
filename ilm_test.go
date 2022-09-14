@@ -62,7 +62,7 @@ func (t *ElasticsearchHandlerTestSuite) TestILMGet() {
 
 	// When error
 	httpmock.RegisterResponder("GET", urlILM, httpmock.NewErrorResponder(errors.New("fack error")))
-	policy, err = t.esHandler.ILMGet("test")
+	_, err = t.esHandler.ILMGet("test")
 	assert.Error(t.T(), err)
 }
 

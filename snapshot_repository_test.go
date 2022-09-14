@@ -39,7 +39,7 @@ func (t *ElasticsearchHandlerTestSuite) TestSnapshotRespositoryGet() {
 
 	// When error
 	httpmock.RegisterResponder("GET", urlSnapshotRepository, httpmock.NewErrorResponder(errors.New("fack error")))
-	repo, err = t.esHandler.SnapshotRepositoryGet("test")
+	_, err = t.esHandler.SnapshotRepositoryGet("test")
 	assert.Error(t.T(), err)
 }
 

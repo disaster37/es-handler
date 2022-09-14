@@ -51,7 +51,7 @@ func (t *ElasticsearchHandlerTestSuite) TestSLMGet() {
 
 	// When error
 	httpmock.RegisterResponder("GET", urlSLM, httpmock.NewErrorResponder(errors.New("fack error")))
-	policy, err = t.esHandler.SLMGet("test")
+	_, err = t.esHandler.SLMGet("test")
 	assert.Error(t.T(), err)
 }
 

@@ -41,7 +41,7 @@ func (t *ElasticsearchHandlerTestSuite) TestUserGet() {
 
 	// When error
 	httpmock.RegisterResponder("GET", urlUser, httpmock.NewErrorResponder(errors.New("fack error")))
-	resp, err = t.esHandler.UserGet("test")
+	_, err = t.esHandler.UserGet("test")
 	assert.Error(t.T(), err)
 }
 

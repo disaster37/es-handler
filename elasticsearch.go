@@ -7,6 +7,9 @@ import (
 )
 
 type ElasticsearchHandler interface {
+
+	Client() (client *elastic.Client)
+
 	// License scope
 	LicenseUpdate(license string) (err error)
 	LicenseDelete() (err error)
@@ -92,4 +95,8 @@ func NewElasticsearchHandler(cfg elastic.Config, log *logrus.Entry) (Elasticsear
 
 func (h *ElasticsearchHandlerImpl) SetLogger(log *logrus.Entry) {
 	h.log = log
+}
+
+func (h *ElasticsearchHandlerImpl) Client() *elastic.Client {
+	return h.client
 }

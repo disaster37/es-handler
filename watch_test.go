@@ -108,7 +108,7 @@ func (t *ElasticsearchHandlerTestSuite) TestWatchGet() {
 
 	// When error
 	httpmock.RegisterResponder("GET", urlWatch, httpmock.NewErrorResponder(errors.New("fack error")))
-	watch, err = t.esHandler.WatchGet("test")
+	_, err = t.esHandler.WatchGet("test")
 	assert.Error(t.T(), err)
 }
 

@@ -24,7 +24,7 @@ func (t *ElasticsearchHandlerTestSuite) TestComponentTemplateGet() {
 			"properties.host_name.type": "keyword",
 		},
 	}
-	result.ComponentTemplates = []olivere.IndicesGetComponentTemplates{olivere.IndicesGetComponentTemplates{ComponentTemplate: &olivere.IndicesGetComponentTemplate{Template: component}}}
+	result.ComponentTemplates = []olivere.IndicesGetComponentTemplates{{ComponentTemplate: &olivere.IndicesGetComponentTemplate{Template: component}}}
 
 	httpmock.RegisterResponder("GET", urlComponentTemplate, func(req *http.Request) (*http.Response, error) {
 		resp, err := httpmock.NewJsonResponse(200, result)
@@ -43,7 +43,7 @@ func (t *ElasticsearchHandlerTestSuite) TestComponentTemplateGet() {
 
 	// When error
 	httpmock.RegisterResponder("GET", urlComponentTemplate, httpmock.NewErrorResponder(errors.New("fack error")))
-	resp, err = t.esHandler.ComponentTemplateGet("test")
+	_, err = t.esHandler.ComponentTemplateGet("test")
 	assert.Error(t.T(), err)
 }
 
