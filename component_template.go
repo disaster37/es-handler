@@ -11,13 +11,9 @@ import (
 )
 
 // ComponentTemplateUpdate permit to update component template
-func (h *ElasticsearchHandlerImpl) ComponentTemplateUpdate(name string, component *olivere.IndicesGetComponentTemplateData) (err error) {
+func (h *ElasticsearchHandlerImpl) ComponentTemplateUpdate(name string, component *olivere.IndicesGetComponentTemplate) (err error) {
 
-	payload := &olivere.IndicesGetComponentTemplate {
-		Template: component,
-	}
-
-	data, err := json.Marshal(payload)
+	data, err := json.Marshal(component)
 	if err != nil {
 		return err
 	}
@@ -70,7 +66,7 @@ func (h *ElasticsearchHandlerImpl) ComponentTemplateDelete(name string) (err err
 }
 
 // ComponentTemplateGet permit to get component template
-func (h *ElasticsearchHandlerImpl) ComponentTemplateGet(name string) (component *olivere.IndicesGetComponentTemplateData, err error) {
+func (h *ElasticsearchHandlerImpl) ComponentTemplateGet(name string) (component *olivere.IndicesGetComponentTemplate, err error) {
 
 	res, err := h.client.API.Cluster.GetComponentTemplate(
 		h.client.API.Cluster.GetComponentTemplate.WithName(name),
@@ -101,10 +97,10 @@ func (h *ElasticsearchHandlerImpl) ComponentTemplateGet(name string) (component 
 		return nil, nil
 	}
 
-	return indexComponentTemplateResp.ComponentTemplates[0].ComponentTemplate.Template, nil
+	return indexComponentTemplateResp.ComponentTemplates[0].ComponentTemplate, nil
 }
 
 // ComponentTemplateDiff permit to check if 2 component template are the same
-func (h *ElasticsearchHandlerImpl) ComponentTemplateDiff(actual, expected *olivere.IndicesGetComponentTemplateData) (diff string, err error) {
+func (h *ElasticsearchHandlerImpl) ComponentTemplateDiff(actual, expected *olivere.IndicesGetComponentTemplate) (diff string, err error) {
 	return StandardDiff(actual, expected, h.log, nil)
 }

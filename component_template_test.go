@@ -15,16 +15,19 @@ var urlComponentTemplate = fmt.Sprintf("%s/_component_template/test", baseURL)
 func (t *ElasticsearchHandlerTestSuite) TestComponentTemplateGet() {
 
 	result := &olivere.IndicesGetComponentTemplateResponse{}
-	component := &olivere.IndicesGetComponentTemplateData{
-		Settings: map[string]any{
-			"index.refresh_interval": "5s",
-		},
-		Mappings: map[string]any{
-			"_source.enabled":           true,
-			"properties.host_name.type": "keyword",
+	component := &olivere.IndicesGetComponentTemplate{
+		Template: &olivere.IndicesGetComponentTemplateData{
+			Settings: map[string]any{
+				"index.refresh_interval": "5s",
+			},
+			Mappings: map[string]any{
+				"_source.enabled":           true,
+				"properties.host_name.type": "keyword",
+			},
 		},
 	}
-	result.ComponentTemplates = []olivere.IndicesGetComponentTemplates{{ComponentTemplate: &olivere.IndicesGetComponentTemplate{Template: component}}}
+
+	result.ComponentTemplates = []olivere.IndicesGetComponentTemplates{{ComponentTemplate: component}}
 
 	httpmock.RegisterResponder("GET", urlComponentTemplate, func(req *http.Request) (*http.Response, error) {
 		resp, err := httpmock.NewJsonResponse(200, result)
@@ -67,13 +70,15 @@ func (t *ElasticsearchHandlerTestSuite) TestComponentTemplateDelete() {
 }
 
 func (t *ElasticsearchHandlerTestSuite) TestComponentTemplateUpdate() {
-	component := &olivere.IndicesGetComponentTemplateData{
-		Settings: map[string]any{
-			"index.refresh_interval": "5s",
-		},
-		Mappings: map[string]any{
-			"_source.enabled":           true,
-			"properties.host_name.type": "keyword",
+	component := &olivere.IndicesGetComponentTemplate{
+		Template: &olivere.IndicesGetComponentTemplateData{
+			Settings: map[string]any{
+				"index.refresh_interval": "5s",
+			},
+			Mappings: map[string]any{
+				"_source.enabled":           true,
+				"properties.host_name.type": "keyword",
+			},
 		},
 	}
 
@@ -95,15 +100,17 @@ func (t *ElasticsearchHandlerTestSuite) TestComponentTemplateUpdate() {
 }
 
 func (t *ElasticsearchHandlerTestSuite) TestComponentTemplateDiff() {
-	var actual, expected *olivere.IndicesGetComponentTemplateData
+	var actual, expected *olivere.IndicesGetComponentTemplate
 
-	expected = &olivere.IndicesGetComponentTemplateData{
-		Settings: map[string]any{
-			"index.refresh_interval": "5s",
-		},
-		Mappings: map[string]any{
-			"_source.enabled":           true,
-			"properties.host_name.type": "keyword",
+	expected = &olivere.IndicesGetComponentTemplate{
+		Template: &olivere.IndicesGetComponentTemplateData{
+			Settings: map[string]any{
+				"index.refresh_interval": "5s",
+			},
+			Mappings: map[string]any{
+				"_source.enabled":           true,
+				"properties.host_name.type": "keyword",
+			},
 		},
 	}
 
@@ -116,13 +123,15 @@ func (t *ElasticsearchHandlerTestSuite) TestComponentTemplateDiff() {
 	assert.NotEmpty(t.T(), diff)
 
 	// When component is the same
-	actual = &olivere.IndicesGetComponentTemplateData{
-		Settings: map[string]any{
-			"index.refresh_interval": "5s",
-		},
-		Mappings: map[string]any{
-			"_source.enabled":           true,
-			"properties.host_name.type": "keyword",
+	actual = &olivere.IndicesGetComponentTemplate{
+		Template: &olivere.IndicesGetComponentTemplateData{
+			Settings: map[string]any{
+				"index.refresh_interval": "5s",
+			},
+			Mappings: map[string]any{
+				"_source.enabled":           true,
+				"properties.host_name.type": "keyword",
+			},
 		},
 	}
 	diff, err = t.esHandler.ComponentTemplateDiff(actual, expected)
@@ -132,7 +141,7 @@ func (t *ElasticsearchHandlerTestSuite) TestComponentTemplateDiff() {
 	assert.Empty(t.T(), diff)
 
 	// When component is not the same
-	expected.Mappings = map[string]any{
+	expected.Template.Mappings = map[string]any{
 		"_source.enabled":           false,
 		"properties.host_name.type": "keyword",
 	}

@@ -55,10 +55,10 @@ type ElasticsearchHandler interface {
 	UserDiff(actual, expected *olivere.XPackSecurityPutUserRequest) (diff string, err error)
 
 	// Component template scope
-	ComponentTemplateUpdate(name string, component *olivere.IndicesGetComponentTemplateData) (err error)
+	ComponentTemplateUpdate(name string, component *olivere.IndicesGetComponentTemplate) (err error)
 	ComponentTemplateDelete(name string) (err error)
-	ComponentTemplateGet(name string) (component *olivere.IndicesGetComponentTemplateData, err error)
-	ComponentTemplateDiff(actual, expected *olivere.IndicesGetComponentTemplateData) (diff string, err error)
+	ComponentTemplateGet(name string) (component *olivere.IndicesGetComponentTemplate, err error)
+	ComponentTemplateDiff(actual, expected *olivere.IndicesGetComponentTemplate) (diff string, err error)
 
 	// Index template scope
 	IndexTemplateUpdate(name string, template *olivere.IndicesGetIndexTemplate) (err error)
