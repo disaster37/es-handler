@@ -12,7 +12,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func standartDiff(actual, expected any, log *logrus.Entry, ignore map[string]any) (diff string, err error) {
+// StandardDiff permit to compare objects
+func StandardDiff(actual, expected any, log *logrus.Entry, ignore map[string]any) (diff string, err error) {
 	acualByte, err := json.Marshal(actual)
 	if err != nil {
 		return diff, err
