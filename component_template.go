@@ -13,7 +13,11 @@ import (
 // ComponentTemplateUpdate permit to update component template
 func (h *ElasticsearchHandlerImpl) ComponentTemplateUpdate(name string, component *olivere.IndicesGetComponentTemplateData) (err error) {
 
-	data, err := json.Marshal(component)
+	payload := &olivere.IndicesGetComponentTemplate {
+		Template: component,
+	}
+
+	data, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
