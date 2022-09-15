@@ -60,7 +60,7 @@ func ignoreDiff(c *ucfg.Config, ignore map[string]any) (err error) {
 		for key, value := range ignore {
 			hasField, err := c.Has(key, -1, ucfg.PathSep("."))
 			if err != nil {
-				return err
+				return errors.Wrapf(err, "Error when check if field %s exist", key)
 			}
 			if hasField {
 				needRemoveKey := false
@@ -72,22 +72,22 @@ func ignoreDiff(c *ucfg.Config, ignore map[string]any) (err error) {
 					case bool:
 						v, err = c.Bool(key, -1, ucfg.PathSep("."))
 						if err != nil {
-							return err
+							return errors.Wrapf(err, "Error when get bool value for key: %s", key)
 						}
 					case string:
 						v, err = c.String(key, -1, ucfg.PathSep("."))
 						if err != nil {
-							return err
+							return errors.Wrapf(err, "Error when get string value for key: %s", key)
 						}
 					case int64:
 						v, err = c.Int(key, -1, ucfg.PathSep("."))
 						if err != nil {
-							return err
+							return errors.Wrapf(err, "Error when get int64 value for key: %s", key)
 						}
 					case float64:
 						v, err = c.Float(key, -1, ucfg.PathSep("."))
 						if err != nil {
-							return err
+							return errors.Wrapf(err, "Error when get float64 value for key: %s", key)
 						}
 					default:
 						return errors.Errorf("Type %T not supported", t)
@@ -102,16 +102,16 @@ func ignoreDiff(c *ucfg.Config, ignore map[string]any) (err error) {
 					childPath := strings.Join(strings.Split(key, ".")[:1], ".")
 					child, err := c.Child(childPath, -1, ucfg.PathSep("."))
 					if err != nil {
-						return err
+						return errors.Wrapf(err, "Error when get child path %s for key %s", childPath, key)
 					}
 					if _, err = c.Remove(key, -1, ucfg.PathSep(".")); err != nil {
-						return err
+						return errors.Wrapf(err, "Error when remove key %s", key)
 					}
 					nb := len(child.GetFields())
 					// Remove parent if no children
 					if nb == 0 {
 						if _, err = c.Remove(childPath, -1, ucfg.PathSep(".")); err != nil {
-							return err
+							return errors.Wrapf(err, "Error when when remove parent key %s", childPath)
 						}
 					}
 
