@@ -16,42 +16,42 @@ import (
 func StandardDiff(actual, expected any, log *logrus.Entry, ignore map[string]any) (diff string, err error) {
 	acualByte, err := json.Marshal(actual)
 	if err != nil {
-		return diff, err
+		return diff, errors.Wrap(err, "Error when marshall actual")
 	}
 	expectedByte, err := json.Marshal(expected)
 	if err != nil {
-		return diff, err
+		return diff, errors.Wrap(err, "Error whe marshall expected")
 	}
 
 	actualConf, err := ucfgjson.NewConfig(acualByte, ucfg.PathSep("."))
 	if err != nil {
-		log.Errorf("Error when converting current Json: %s\ndata: %s", err.Error(), string(acualByte))
-		return diff, err
+		return diff, errors.Wrap(err, "Error when init config object from actual")
 	}
 	if err = ignoreDiff(actualConf, ignore); err != nil {
-		return diff, err
+		return diff, errors.Wrap(err, "Error when ignore diff on actual")
 	}
 	actualUnpack := reflect.New(reflect.TypeOf(actual)).Interface()
 	if err = actualConf.Unpack(actualUnpack, ucfg.StructTag("json")); err != nil {
-		return diff, err
+		return diff, errors.Wrap(err, "Error when unpack on actual")
 	}
 	expectedConf, err := ucfgjson.NewConfig(expectedByte, ucfg.PathSep("."))
 	if err != nil {
-		log.Errorf("Error when converting new Json: %s\ndata: %s", err.Error(), string(expectedByte))
-		return diff, err
+		return diff, errors.Wrap(err, "Error when init config object from expected")
 	}
 	if err = ignoreDiff(expectedConf, ignore); err != nil {
-		return diff, err
+		return diff, errors.Wrap(err, "Error when ignore diff on expected")
 	}
 	expectedUnpack := reflect.New(reflect.TypeOf(expected)).Interface()
 	if err = expectedConf.Unpack(expectedUnpack, ucfg.StructTag("json")); err != nil {
-		return diff, err
+		return diff, errors.Wrap(err, "Error when unpack on expected")
 	}
 
+	/*
 	test := map[string]any{}
 	if err = expectedConf.Unpack(&test); err != nil {
-		return diff, err
+		return diff, errors.Wrap(err, "Error when test")
 	}
+	*/
 
 	return cmp.Diff(actualUnpack, expectedUnpack), nil
 }

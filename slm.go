@@ -9,6 +9,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+var ignoreSLMPolicyDiff = map[string]any{
+	"config.ignore_unavailable": false,
+	"config.include_global_state": false,
+}
+
 // SnapshotLifecyclePolicy object returned by API
 type SnapshotLifecyclePolicy map[string]*SnapshotLifecyclePolicyGet
 
@@ -140,5 +145,5 @@ func (h *ElasticsearchHandlerImpl) SLMGet(name string) (policy *SnapshotLifecycl
 
 // SLMDiff permit to check if 2 policy are the same
 func (h *ElasticsearchHandlerImpl) SLMDiff(actual, expected *SnapshotLifecyclePolicySpec) (diffStr string, err error) {
-	return StandardDiff(actual, expected, h.log, nil)
+	return StandardDiff(actual, expected, h.log, ignoreSLMPolicyDiff)
 }

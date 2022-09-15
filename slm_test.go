@@ -158,6 +158,26 @@ func (t *ElasticsearchHandlerTestSuite) TestSLMDiff() {
 	}
 	assert.Empty(t.T(), diff)
 
+	// When policy is the same because of exclude
+	actual = &SnapshotLifecyclePolicySpec{
+		Name:       "<daily-snap-{now/d}>",
+		Repository: "repo",
+		Schedule:   "0 30 1 * * ?",
+		Config: ElasticsearchSLMConfig{
+			Indices:            []string{"test-*"},
+		},
+		Retention: &ElasticsearchSLMRetention{
+			ExpireAfter: "7d",
+			MinCount:    5,
+			MaxCount:    10,
+		},
+	}
+	diff, err = t.esHandler.SLMDiff(actual, expected)
+	if err != nil {
+		t.Fail(err.Error())
+	}
+	assert.Empty(t.T(), diff)
+
 	// When policy is not the same
 	expected.Repository = "repo2"
 	diff, err = t.esHandler.SLMDiff(actual, expected)
