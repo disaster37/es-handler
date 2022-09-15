@@ -116,5 +116,5 @@ func (h *ElasticsearchHandlerImpl) ILMDiff(actual, expected *olivere.XPackIlmGet
 	if expected != nil {
 		expectedPolicy = expected.Policy
 	}
-	return standartDiff(actualPolicy, expectedPolicy, h.log, ignoreILMPolicyDiff)
+	return StandardDiff(actualPolicy, expectedPolicy, h.log, ignoreILMPolicyDiff)
 }

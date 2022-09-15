@@ -108,5 +108,5 @@ func (h *ElasticsearchHandlerImpl) WatchGet(name string) (watch *olivere.XPackWa
 
 // ILMDiff permit to check if 2 policy are the same
 func (h *ElasticsearchHandlerImpl) WatchDiff(actual, expected *olivere.XPackWatch) (diffStr string, err error) {
-	return standartDiff(actual, expected, h.log, ignoreWatchDiff)
+	return StandardDiff(actual, expected, h.log, ignoreWatchDiff)
 }
