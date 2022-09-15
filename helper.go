@@ -99,21 +99,28 @@ func ignoreDiff(c *ucfg.Config, ignore map[string]any) (err error) {
 				}
 				if needRemoveKey {
 
-					childPath := strings.Join(strings.Split(key, ".")[:1], ".")
-					child, err := c.Child(childPath, -1, ucfg.PathSep("."))
-					if err != nil {
-						return errors.Wrapf(err, "Error when get child path %s for key %s", childPath, key)
-					}
+					
 					if _, err = c.Remove(key, -1, ucfg.PathSep(".")); err != nil {
 						return errors.Wrapf(err, "Error when remove key %s", key)
 					}
-					nb := len(child.GetFields())
-					// Remove parent if no children
-					if nb == 0 {
-						if _, err = c.Remove(childPath, -1, ucfg.PathSep(".")); err != nil {
-							return errors.Wrapf(err, "Error when when remove parent key %s", childPath)
+
+					// Check if needed to remove parent key because of is empty
+					parentPaths := strings.Split(key, ".")
+					if len (parentPaths) > 1 {
+						parentPath := strings.Join(parentPaths[:len(parentPaths) -1], ".")
+						parent, err := c.Child(parentPath, -1, ucfg.PathSep("."))
+						if err != nil {
+							return errors.Wrapf(err, "Error when get parent path %s for key %s", parentPath, key)
+						}
+						nb := len(parent.GetFields())
+						// Remove parent if no children
+						if nb == 0 {
+							if _, err = c.Remove(parentPath, -1, ucfg.PathSep(".")); err != nil {
+								return errors.Wrapf(err, "Error when when remove parent key %s", parentPath)
+							}
 						}
 					}
+					
 
 				}
 			}
