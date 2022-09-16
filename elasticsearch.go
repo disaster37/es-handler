@@ -72,6 +72,12 @@ type ElasticsearchHandler interface {
 	WatchGet(name string) (watch *olivere.XPackWatch, err error)
 	WatchDiff(actual, expected *olivere.XPackWatch) (diff string, err error)
 
+	// Ingest pipline scope
+	IngestPipelineUpdate(name string, pipeline *olivere.IngestGetPipeline) (err error)
+	IngestPipelineDelete(name string) (err error)
+	IngestPipelineGet(name string) (pipeline *olivere.IngestGetPipeline, err error)
+	IngestPipelineDiff(actual, expected *olivere.IngestGetPipeline) (diff string, err error)
+
 	SetLogger(log *logrus.Entry)
 }
 
