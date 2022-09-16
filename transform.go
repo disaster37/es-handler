@@ -20,7 +20,7 @@ type Transform struct {
 	Description string `json:"description,omitempty"`
 	Destination *TransformDest `json:"dest"`
 	Frequency string `json:"frequency,omitempty"`
-	Lastest *TransformLatest `json:"latest"`
+	Lastest *TransformLatest `json:"latest,omitempty"`
 	Metadata map[string]any `json:"_meta,omitempty"`
 	Pivot *TransformPivot `json:"pivot"`
 	Retention *TransformRetention `json:"retention_policy,omitempty"`
