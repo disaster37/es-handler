@@ -78,6 +78,12 @@ type ElasticsearchHandler interface {
 	IngestPipelineGet(name string) (pipeline *olivere.IngestGetPipeline, err error)
 	IngestPipelineDiff(actual, expected *olivere.IngestGetPipeline) (diff string, err error)
 
+	// Transform scope
+	TransformUpdate(name string, transform *Transform) (err error)
+	TransformDelete(name string) (err error)
+	TransformGet(name string) (transform *Transform, err error)
+	TransformDiff(actual, expected *Transform) (diff string, err error)
+
 	SetLogger(log *logrus.Entry)
 }
 
