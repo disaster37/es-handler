@@ -715,17 +715,22 @@ func (mr *MockElasticsearchHandlerMockRecorder) UserGet(arg0 interface{}) *gomoc
 }
 
 // UserUpdate mocks base method.
-func (m *MockElasticsearchHandler) UserUpdate(arg0 string, arg1 *elastic.XPackSecurityPutUserRequest) error {
+func (m *MockElasticsearchHandler) UserUpdate(arg0 string, arg1 *elastic.XPackSecurityPutUserRequest, arg2 ...bool) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UserUpdate", arg0, arg1)
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UserUpdate", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UserUpdate indicates an expected call of UserUpdate.
-func (mr *MockElasticsearchHandlerMockRecorder) UserUpdate(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockElasticsearchHandlerMockRecorder) UserUpdate(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserUpdate", reflect.TypeOf((*MockElasticsearchHandler)(nil).UserUpdate), arg0, arg1)
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserUpdate", reflect.TypeOf((*MockElasticsearchHandler)(nil).UserUpdate), varargs...)
 }
 
 // WatchDelete mocks base method.

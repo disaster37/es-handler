@@ -49,7 +49,7 @@ type ElasticsearchHandler interface {
 
 	// User scope
 	UserCreate(name string, user *olivere.XPackSecurityPutUserRequest) (err error)
-	UserUpdate(name string, user *olivere.XPackSecurityPutUserRequest) (err error)
+	UserUpdate(name string, user *olivere.XPackSecurityPutUserRequest, isProtected ...bool) (err error)
 	UserDelete(name string) (err error)
 	UserGet(name string) (user *olivere.XPackSecurityUser, err error)
 	UserDiff(actual, expected *olivere.XPackSecurityPutUserRequest) (diff string, err error)

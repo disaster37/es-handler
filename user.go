@@ -39,7 +39,13 @@ func (h *ElasticsearchHandlerImpl) UserCreate(name string, user *olivere.XPackSe
 }
 
 // UserUpdate permit to update the user
-func (h *ElasticsearchHandlerImpl) UserUpdate(name string, user *olivere.XPackSecurityPutUserRequest) (err error) {
+func (h *ElasticsearchHandlerImpl) UserUpdate(name string, user *olivere.XPackSecurityPutUserRequest, isProtected ...bool) (err error) {
+
+	isP := false
+
+	if len(isProtected) > 0 && isProtected[0] {
+		isP = true
+	}
 
 	//check if need to update password
 	if user.Password != "" || user.PasswordHash != "" {
@@ -74,6 +80,11 @@ func (h *ElasticsearchHandlerImpl) UserUpdate(name string, user *olivere.XPackSe
 		}
 
 		h.log.Infof("Updated user password %s successfully", name)
+	}
+
+	// Not update use if is protected
+	if isP {
+		return nil
 	}
 
 	user.Password = ""
