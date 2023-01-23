@@ -7,7 +7,6 @@ import (
 )
 
 type ElasticsearchHandler interface {
-
 	Client() (client *elastic.Client)
 
 	// License scope
@@ -83,6 +82,9 @@ type ElasticsearchHandler interface {
 	TransformDelete(name string) (err error)
 	TransformGet(name string) (transform *Transform, err error)
 	TransformDiff(actual, expected *Transform) (diff string, err error)
+
+	// Cluster scope
+	ClusterHealth() (health *olivere.ClusterHealthResponse, err error)
 
 	SetLogger(log *logrus.Entry)
 }

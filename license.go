@@ -3,7 +3,7 @@ package eshandler
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"strings"
 
 	olivere "github.com/olivere/elastic/v7"
@@ -23,7 +23,7 @@ func (h *ElasticsearchHandlerImpl) LicenseEnableBasic() (err error) {
 	if res.IsError() {
 		return errors.Errorf("Error when check if basic license can be enabled: %s", res.String())
 	}
-	b, err := ioutil.ReadAll(res.Body)
+	b, err := io.ReadAll(res.Body)
 	if err != nil {
 		return err
 	}
@@ -128,7 +128,7 @@ func (h *ElasticsearchHandlerImpl) LicenseGet() (license *olivere.XPackInfoLicen
 		return nil, errors.Errorf("Error when get license: %s", res.String())
 
 	}
-	b, err := ioutil.ReadAll(res.Body)
+	b, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
