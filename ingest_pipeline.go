@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 
 	olivere "github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
@@ -85,7 +85,7 @@ func (h *ElasticsearchHandlerImpl) IngestPipelineGet(name string) (pipeline *oli
 		return nil, errors.Errorf("Error when get ingest pipeline %s: %s", name, res.String())
 
 	}
-	b, err := ioutil.ReadAll(res.Body)
+	b, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
