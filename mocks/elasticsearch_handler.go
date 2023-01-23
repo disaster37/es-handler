@@ -51,6 +51,21 @@ func (mr *MockElasticsearchHandlerMockRecorder) Client() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Client", reflect.TypeOf((*MockElasticsearchHandler)(nil).Client))
 }
 
+// ClusterHealth mocks base method.
+func (m *MockElasticsearchHandler) ClusterHealth() (*elastic.ClusterHealthResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ClusterHealth")
+	ret0, _ := ret[0].(*elastic.ClusterHealthResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ClusterHealth indicates an expected call of ClusterHealth.
+func (mr *MockElasticsearchHandlerMockRecorder) ClusterHealth() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClusterHealth", reflect.TypeOf((*MockElasticsearchHandler)(nil).ClusterHealth))
+}
+
 // ComponentTemplateDelete mocks base method.
 func (m *MockElasticsearchHandler) ComponentTemplateDelete(arg0 string) error {
 	m.ctrl.T.Helper()
