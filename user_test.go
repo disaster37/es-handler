@@ -143,7 +143,7 @@ func (t *ElasticsearchHandlerTestSuite) TestUserUpdate() {
 }
 
 func (t *ElasticsearchHandlerTestSuite) TestUserDiff() {
-	var actual, expected *olivere.XPackSecurityPutUserRequest
+	var actual, expected, original *olivere.XPackSecurityPutUserRequest
 
 	expected = &olivere.XPackSecurityPutUserRequest{
 		Enabled:  true,
@@ -155,11 +155,12 @@ func (t *ElasticsearchHandlerTestSuite) TestUserDiff() {
 
 	// When user not exist yet
 	actual = nil
-	diff, err := t.esHandler.UserDiff(actual, expected)
+	diff, err := t.esHandler.UserDiff(actual, expected, nil)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When user is the same
 	actual = &olivere.XPackSecurityPutUserRequest{
@@ -169,18 +170,55 @@ func (t *ElasticsearchHandlerTestSuite) TestUserDiff() {
 		FullName: "test",
 		Password: "password",
 	}
-	diff, err = t.esHandler.UserDiff(actual, expected)
+	diff, err = t.esHandler.UserDiff(actual, expected, actual)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.Empty(t.T(), diff)
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When user is not the same
 	expected.Email = "no2@no.no"
-	diff, err = t.esHandler.UserDiff(actual, expected)
+	diff, err = t.esHandler.UserDiff(actual, expected, actual)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
+
+	// When Elastic add default value
+	actual = &olivere.XPackSecurityPutUserRequest{
+		Enabled:  true,
+		Email:    "no@no.no",
+		Roles:    []string{"kibana_user"},
+		FullName: "test",
+		Password: "password",
+		Metadata: map[string]interface{}{
+			"default": "test",
+		},
+	}
+
+	expected = &olivere.XPackSecurityPutUserRequest{
+		Enabled:  true,
+		Email:    "no@no.no",
+		Roles:    []string{"kibana_user"},
+		FullName: "test",
+		Password: "password",
+	}
+
+	original = &olivere.XPackSecurityPutUserRequest{
+		Enabled:  true,
+		Email:    "no@no.no",
+		Roles:    []string{"kibana_user"},
+		FullName: "test",
+		Password: "password",
+	}
+
+	diff, err = t.esHandler.UserDiff(actual, expected, original)
+	if err != nil {
+		t.Fail(err.Error())
+	}
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), actual, diff.Patched)
 
 }

@@ -95,7 +95,7 @@ func (t *ElasticsearchHandlerTestSuite) TestRoleMappingUpdate() {
 }
 
 func (t *ElasticsearchHandlerTestSuite) TestRoleMappingDiff() {
-	var actual, expected *olivere.XPackSecurityRoleMapping
+	var actual, expected, original *olivere.XPackSecurityRoleMapping
 
 	expected = &olivere.XPackSecurityRoleMapping{
 		Enabled: true,
@@ -109,11 +109,12 @@ func (t *ElasticsearchHandlerTestSuite) TestRoleMappingDiff() {
 
 	// When role mapping not exist yet
 	actual = nil
-	diff, err := t.esHandler.RoleMappingDiff(actual, expected)
+	diff, err := t.esHandler.RoleMappingDiff(actual, expected, nil)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When role mapping is the same
 	actual = &olivere.XPackSecurityRoleMapping{
@@ -125,18 +126,61 @@ func (t *ElasticsearchHandlerTestSuite) TestRoleMappingDiff() {
 			},
 		},
 	}
-	diff, err = t.esHandler.RoleMappingDiff(actual, expected)
+	diff, err = t.esHandler.RoleMappingDiff(actual, expected, actual)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.Empty(t.T(), diff)
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When role mapping is not the same
 	expected.Roles = []string{"kibana_reader"}
-	diff, err = t.esHandler.RoleMappingDiff(actual, expected)
+	diff, err = t.esHandler.RoleMappingDiff(actual, expected, actual)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
+
+	// When Elastic add default value
+	actual = &olivere.XPackSecurityRoleMapping{
+		Enabled: true,
+		Roles:   []string{"superuser"},
+		Rules: map[string]any{
+			"field": map[string]any{
+				"groups": "cn=admins,dc=example,dc=com",
+			},
+		},
+		Metadata: map[string]any{
+			"default": "test",
+		},
+	}
+
+	expected = &olivere.XPackSecurityRoleMapping{
+		Enabled: true,
+		Roles:   []string{"superuser"},
+		Rules: map[string]any{
+			"field": map[string]any{
+				"groups": "cn=admins,dc=example,dc=com",
+			},
+		},
+	}
+
+	original = &olivere.XPackSecurityRoleMapping{
+		Enabled: true,
+		Roles:   []string{"superuser"},
+		Rules: map[string]any{
+			"field": map[string]any{
+				"groups": "cn=admins,dc=example,dc=com",
+			},
+		},
+	}
+
+	diff, err = t.esHandler.RoleMappingDiff(actual, expected, original)
+	if err != nil {
+		t.Fail(err.Error())
+	}
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), actual, diff.Patched)
 
 }

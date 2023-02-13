@@ -6,11 +6,13 @@ import (
 	"encoding/json"
 	"io"
 
+	"github.com/disaster37/es-handler/v8/patch"
+	jsonIterator "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 )
 
 var ignoreSLMPolicyDiff = map[string]any{
-	"config.ignore_unavailable": false,
+	"config.ignore_unavailable":   false,
 	"config.include_global_state": false,
 }
 
@@ -144,6 +146,23 @@ func (h *ElasticsearchHandlerImpl) SLMGet(name string) (policy *SnapshotLifecycl
 }
 
 // SLMDiff permit to check if 2 policy are the same
-func (h *ElasticsearchHandlerImpl) SLMDiff(actual, expected *SnapshotLifecyclePolicySpec) (diffStr string, err error) {
-	return StandardDiff(actual, expected, h.log, ignoreSLMPolicyDiff)
+func (h *ElasticsearchHandlerImpl) SLMDiff(actualObject, expectedObject, originalObject *SnapshotLifecyclePolicySpec) (patchResult *patch.PatchResult, err error) {
+
+	// If not yet exist
+	if actualObject == nil {
+		expected, err := jsonIterator.ConfigCompatibleWithStandardLibrary.Marshal(expectedObject)
+		if err != nil {
+			return nil, errors.Wrap(err, "Failed to convert expected object to byte sequence")
+		}
+
+		return &patch.PatchResult{
+			Patch:    expected,
+			Current:  expected,
+			Modified: expected,
+			Original: nil,
+			Patched: expectedObject,
+		}, nil
+	}
+
+	return patch.DefaultPatchMaker.Calculate(actualObject, expectedObject, originalObject)
 }

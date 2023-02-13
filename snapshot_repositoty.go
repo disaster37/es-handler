@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"io"
 
+	"github.com/disaster37/es-handler/v8/patch"
+	jsonIterator "github.com/json-iterator/go"
 	olivere "github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
 )
@@ -101,6 +103,22 @@ func (h *ElasticsearchHandlerImpl) SnapshotRepositoryGet(name string) (repositor
 }
 
 // SnapshotRepositoryDiff permit to check if 2 repositories are the same
-func (h *ElasticsearchHandlerImpl) SnapshotRepositoryDiff(actual, expected *olivere.SnapshotRepositoryMetaData) (diffStr string, err error) {
-	return StandardDiff(actual, expected, h.log, nil)
+func (h *ElasticsearchHandlerImpl) SnapshotRepositoryDiff(actualObject, expectedObject, originalObject *olivere.SnapshotRepositoryMetaData) (patchResult *patch.PatchResult, err error) {
+	// If not yet exist
+	if actualObject == nil {
+		expected, err := jsonIterator.ConfigCompatibleWithStandardLibrary.Marshal(expectedObject)
+		if err != nil {
+			return nil, errors.Wrap(err, "Failed to convert expected object to byte sequence")
+		}
+
+		return &patch.PatchResult{
+			Patch:    expected,
+			Current:  expected,
+			Modified: expected,
+			Original: nil,
+			Patched:  expectedObject,
+		}, nil
+	}
+
+	return patch.DefaultPatchMaker.Calculate(actualObject, expectedObject, originalObject)
 }

@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"io"
 
+	"github.com/disaster37/es-handler/v8/patch"
+	jsonIterator "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 )
 
@@ -14,30 +16,30 @@ type TransformGetResponse struct {
 }
 
 type Transform struct {
-	Id          string            `json:"id,omitempty"`
-	Version     string            `json:"version,omitempty"`
-	CreateTime  int64             `json:"create_time,omitempty"`
-	Description string `json:"description,omitempty"`
-	Destination *TransformDest `json:"dest"`
-	Frequency string `json:"frequency,omitempty"`
-	Lastest *TransformLatest `json:"latest,omitempty"`
-	Metadata map[string]any `json:"_meta,omitempty"`
-	Pivot *TransformPivot `json:"pivot"`
-	Retention *TransformRetention `json:"retention_policy,omitempty"`
-	Settings map[string]any `json:"settings,omitempty"`
-	Source *TransformSource `json:"source"`
-	Sync *TransformSync `json:"sync"`
+	Id          string              `json:"id,omitempty"`
+	Version     string              `json:"version,omitempty"`
+	CreateTime  int64               `json:"create_time,omitempty"`
+	Description string              `json:"description,omitempty"`
+	Destination *TransformDest      `json:"dest"`
+	Frequency   string              `json:"frequency,omitempty"`
+	Lastest     *TransformLatest    `json:"latest,omitempty"`
+	Metadata    map[string]any      `json:"_meta,omitempty"`
+	Pivot       *TransformPivot     `json:"pivot"`
+	Retention   *TransformRetention `json:"retention_policy,omitempty"`
+	Settings    map[string]any      `json:"settings,omitempty"`
+	Source      *TransformSource    `json:"source"`
+	Sync        *TransformSync      `json:"sync"`
 }
 
 type TransformLatest struct {
-	Sort string `json:"sort"`
+	Sort      string   `json:"sort"`
 	UniqueKey []string `json:"unique_key"`
 }
 
 type TransformSource struct {
-	Index []string    `json:"index"`
-	Query any `json:"query,omitempty"`
-	RuntimeMappings any `json:"runtime_mappings,omitempty"`
+	Index           []string `json:"index"`
+	Query           any      `json:"query,omitempty"`
+	RuntimeMappings any      `json:"runtime_mappings,omitempty"`
 }
 
 type TransformDest struct {
@@ -59,7 +61,7 @@ type TransformSyncTime struct {
 }
 
 type TransformRetentionTime struct {
-	Field string `json:"field"`
+	Field  string `json:"field"`
 	MaxAge string `json:"max_age"`
 }
 
@@ -67,7 +69,6 @@ type TransformPivot struct {
 	GroupBy      map[string]any `json:"group_by"`
 	Aggregations map[string]any `json:"aggregations"`
 }
-
 
 // TransformUpdate permit to create or update transform
 func (h *ElasticsearchHandlerImpl) TransformUpdate(name string, transform *Transform) (err error) {
@@ -160,6 +161,22 @@ func (h *ElasticsearchHandlerImpl) TransformGet(name string) (transform *Transfo
 }
 
 // TransformDiff permit to check if 2 transform are the same
-func (h *ElasticsearchHandlerImpl) TransformDiff(actual, expected *Transform) (diff string, err error) {
-	return StandardDiff(actual, expected, h.log, nil)
+func (h *ElasticsearchHandlerImpl) TransformDiff(actualObject, expectedObject, originalObject *Transform) (patchResult *patch.PatchResult, err error) {
+	// If not yet exist
+	if actualObject == nil {
+		expected, err := jsonIterator.ConfigCompatibleWithStandardLibrary.Marshal(expectedObject)
+		if err != nil {
+			return nil, errors.Wrap(err, "Failed to convert expected object to byte sequence")
+		}
+
+		return &patch.PatchResult{
+			Patch:    expected,
+			Current:  expected,
+			Modified: expected,
+			Original: nil,
+			Patched: expectedObject,
+		}, nil
+	}
+
+	return patch.DefaultPatchMaker.Calculate(actualObject, expectedObject, originalObject)
 }

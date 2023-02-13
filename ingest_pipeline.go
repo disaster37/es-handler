@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"io"
 
+	"github.com/disaster37/es-handler/v8/patch"
+	jsonIterator "github.com/json-iterator/go"
 	olivere "github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
 )
@@ -42,7 +44,6 @@ func (h *ElasticsearchHandlerImpl) IngestPipelineUpdate(name string, pipeline *o
 // IngestPipelineDelete permit to delete ingest pipeline
 func (h *ElasticsearchHandlerImpl) IngestPipelineDelete(name string) (err error) {
 
-	
 	res, err := h.client.API.Ingest.DeletePipeline(
 		name,
 		h.client.API.Ingest.DeletePipeline.WithContext(context.Background()),
@@ -94,11 +95,26 @@ func (h *ElasticsearchHandlerImpl) IngestPipelineGet(name string) (pipeline *oli
 		return nil, err
 	}
 
-
 	return pipelineResp[name], nil
 }
 
 // IngestPipelineDiff permit to check if 2 ingest pipeline are the same
-func (h *ElasticsearchHandlerImpl) IngestPipelineDiff(actual, expected *olivere.IngestGetPipeline) (diff string, err error) {
-	return StandardDiff(actual, expected, h.log, nil)
+func (h *ElasticsearchHandlerImpl) IngestPipelineDiff(actualObject, expectedObject, originalObject *olivere.IngestGetPipeline) (patchResult *patch.PatchResult, err error) {
+	// If not yet exist
+	if actualObject == nil {
+		expected, err := jsonIterator.ConfigCompatibleWithStandardLibrary.Marshal(expectedObject)
+		if err != nil {
+			return nil, errors.Wrap(err, "Failed to convert expected object to byte sequence")
+		}
+
+		return &patch.PatchResult{
+			Patch:    expected,
+			Current:  expected,
+			Modified: expected,
+			Original: nil,
+			Patched:  expectedObject,
+		}, nil
+	}
+
+	return patch.DefaultPatchMaker.Calculate(actualObject, expectedObject, originalObject)
 }

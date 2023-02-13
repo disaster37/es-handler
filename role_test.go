@@ -94,7 +94,7 @@ func (t *ElasticsearchHandlerTestSuite) TestRoleUpdate() {
 }
 
 func (t *ElasticsearchHandlerTestSuite) TestRoleDiff() {
-	var actual, expected *XPackSecurityRole
+	var actual, expected, original *XPackSecurityRole
 
 	expected = &XPackSecurityRole{
 		Cluster: []string{"all"},
@@ -108,11 +108,12 @@ func (t *ElasticsearchHandlerTestSuite) TestRoleDiff() {
 
 	// When role not exist yet
 	actual = nil
-	diff, err := t.esHandler.RoleDiff(actual, expected)
+	diff, err := t.esHandler.RoleDiff(actual, expected, nil)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When role is the same
 	actual = &XPackSecurityRole{
@@ -124,11 +125,12 @@ func (t *ElasticsearchHandlerTestSuite) TestRoleDiff() {
 			},
 		},
 	}
-	diff, err = t.esHandler.RoleDiff(actual, expected)
+	diff, err = t.esHandler.RoleDiff(actual, expected, actual)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.Empty(t.T(), diff)
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When role is not the same
 	expected.Indices = []XPackSecurityIndicesPermissions{
@@ -137,10 +139,52 @@ func (t *ElasticsearchHandlerTestSuite) TestRoleDiff() {
 			Privileges: []string{"read"},
 		},
 	}
-	diff, err = t.esHandler.RoleDiff(actual, expected)
+	diff, err = t.esHandler.RoleDiff(actual, expected, actual)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
+
+	// When elastic add default values
+	expected = &XPackSecurityRole{
+		Cluster: []string{"all"},
+		Indices: []XPackSecurityIndicesPermissions{
+			{
+				Names:      []string{"logstash-*"},
+				Privileges: []string{"read"},
+			},
+		},
+	}
+
+	original = &XPackSecurityRole{
+		Cluster: []string{"all"},
+		Indices: []XPackSecurityIndicesPermissions{
+			{
+				Names:      []string{"logstash-*"},
+				Privileges: []string{"read"},
+			},
+		},
+	}
+
+	actual = &XPackSecurityRole{
+		Cluster: []string{"all"},
+		Indices: []XPackSecurityIndicesPermissions{
+			{
+				Names:      []string{"logstash-*"},
+				Privileges: []string{"read"},
+			},
+		},
+		Metadata: map[string]interface{}{
+			"default": "plop",
+		},
+	}
+
+	diff, err = t.esHandler.RoleDiff(actual, expected, original)
+	if err != nil {
+		t.Fail(err.Error())
+	}
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), actual, diff.Patched)
 
 }

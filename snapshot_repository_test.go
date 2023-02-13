@@ -89,7 +89,7 @@ func (t *ElasticsearchHandlerTestSuite) TestSnapshotRepositoryUpdate() {
 }
 
 func (t *ElasticsearchHandlerTestSuite) TestSnapshotRepositoryDiff() {
-	var actual, expected *olivere.SnapshotRepositoryMetaData
+	var actual, expected, original *olivere.SnapshotRepositoryMetaData
 
 	expected = &olivere.SnapshotRepositoryMetaData{
 		Type: "fs",
@@ -100,11 +100,12 @@ func (t *ElasticsearchHandlerTestSuite) TestSnapshotRepositoryDiff() {
 
 	// When SLM not exist yet
 	actual = nil
-	diff, err := t.esHandler.SnapshotRepositoryDiff(actual, expected)
+	diff, err := t.esHandler.SnapshotRepositoryDiff(actual, expected, nil)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When policy is the same
 	actual = &olivere.SnapshotRepositoryMetaData{
@@ -113,18 +114,48 @@ func (t *ElasticsearchHandlerTestSuite) TestSnapshotRepositoryDiff() {
 			"location": "/snapshot",
 		},
 	}
-	diff, err = t.esHandler.SnapshotRepositoryDiff(actual, expected)
+	diff, err = t.esHandler.SnapshotRepositoryDiff(actual, expected, actual)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.Empty(t.T(), diff)
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When policy is not the same
 	expected.Type = "s3"
-	diff, err = t.esHandler.SnapshotRepositoryDiff(actual, expected)
+	diff, err = t.esHandler.SnapshotRepositoryDiff(actual, expected, actual)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
+
+	// When elastic set default values
+	actual = &olivere.SnapshotRepositoryMetaData{
+		Type: "fs",
+		Settings: map[string]interface{}{
+			"location": "/snapshot",
+			"default": "plop",
+		},
+	}
+	expected = &olivere.SnapshotRepositoryMetaData{
+		Type: "fs",
+		Settings: map[string]interface{}{
+			"location": "/snapshot",
+		},
+	}
+	original = &olivere.SnapshotRepositoryMetaData{
+		Type: "fs",
+		Settings: map[string]interface{}{
+			"location": "/snapshot",
+		},
+	}
+
+	diff, err = t.esHandler.SnapshotRepositoryDiff(actual, expected, original)
+	if err != nil {
+		t.Fail(err.Error())
+	}
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), actual, diff.Patched)
 
 }

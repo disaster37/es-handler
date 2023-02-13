@@ -17,8 +17,8 @@ func (t *ElasticsearchHandlerTestSuite) TestTransformGet() {
 	transform := &Transform{
 		Source: &TransformSource{
 			Index: []string{"kibana_sample_data_ecommerce"},
-			Query: map[string]any {
-				"term": map[string]any {
+			Query: map[string]any{
+				"term": map[string]any{
 					"geoip.continent_name": map[string]any{
 						"value": "Asia",
 					},
@@ -26,7 +26,7 @@ func (t *ElasticsearchHandlerTestSuite) TestTransformGet() {
 			},
 		},
 		Pivot: &TransformPivot{
-			GroupBy: map[string]any {
+			GroupBy: map[string]any{
 				"customer_id": map[string]any{
 					"terms": map[string]any{
 						"field": "customer_id",
@@ -43,7 +43,7 @@ func (t *ElasticsearchHandlerTestSuite) TestTransformGet() {
 		},
 		Description: "Maximum priced ecommerce data by customer_id in Asia",
 		Destination: &TransformDest{
-			Index: "kibana_sample_data_ecommerce_transform1",
+			Index:    "kibana_sample_data_ecommerce_transform1",
 			Pipeline: "add_timestamp_pipeline",
 		},
 		Frequency: "5m",
@@ -55,7 +55,7 @@ func (t *ElasticsearchHandlerTestSuite) TestTransformGet() {
 		},
 		Retention: &TransformRetention{
 			Time: TransformRetentionTime{
-				Field: "order_date",
+				Field:  "order_date",
 				MaxAge: "30d",
 			},
 		},
@@ -106,8 +106,8 @@ func (t *ElasticsearchHandlerTestSuite) TestTransformUpdate() {
 	transform := &Transform{
 		Source: &TransformSource{
 			Index: []string{"kibana_sample_data_ecommerce"},
-			Query: map[string]any {
-				"term": map[string]any {
+			Query: map[string]any{
+				"term": map[string]any{
 					"geoip.continent_name": map[string]any{
 						"value": "Asia",
 					},
@@ -115,7 +115,7 @@ func (t *ElasticsearchHandlerTestSuite) TestTransformUpdate() {
 			},
 		},
 		Pivot: &TransformPivot{
-			GroupBy: map[string]any {
+			GroupBy: map[string]any{
 				"customer_id": map[string]any{
 					"terms": map[string]any{
 						"field": "customer_id",
@@ -132,7 +132,7 @@ func (t *ElasticsearchHandlerTestSuite) TestTransformUpdate() {
 		},
 		Description: "Maximum priced ecommerce data by customer_id in Asia",
 		Destination: &TransformDest{
-			Index: "kibana_sample_data_ecommerce_transform1",
+			Index:    "kibana_sample_data_ecommerce_transform1",
 			Pipeline: "add_timestamp_pipeline",
 		},
 		Frequency: "5m",
@@ -144,7 +144,7 @@ func (t *ElasticsearchHandlerTestSuite) TestTransformUpdate() {
 		},
 		Retention: &TransformRetention{
 			Time: TransformRetentionTime{
-				Field: "order_date",
+				Field:  "order_date",
 				MaxAge: "30d",
 			},
 		},
@@ -168,13 +168,13 @@ func (t *ElasticsearchHandlerTestSuite) TestTransformUpdate() {
 }
 
 func (t *ElasticsearchHandlerTestSuite) TestTransformDiff() {
-	var actual, expected *Transform
+	var actual, expected, original *Transform
 
 	expected = &Transform{
 		Source: &TransformSource{
 			Index: []string{"kibana_sample_data_ecommerce"},
-			Query: map[string]any {
-				"term": map[string]any {
+			Query: map[string]any{
+				"term": map[string]any{
 					"geoip.continent_name": map[string]any{
 						"value": "Asia",
 					},
@@ -182,7 +182,7 @@ func (t *ElasticsearchHandlerTestSuite) TestTransformDiff() {
 			},
 		},
 		Pivot: &TransformPivot{
-			GroupBy: map[string]any {
+			GroupBy: map[string]any{
 				"customer_id": map[string]any{
 					"terms": map[string]any{
 						"field": "customer_id",
@@ -199,7 +199,7 @@ func (t *ElasticsearchHandlerTestSuite) TestTransformDiff() {
 		},
 		Description: "Maximum priced ecommerce data by customer_id in Asia",
 		Destination: &TransformDest{
-			Index: "kibana_sample_data_ecommerce_transform1",
+			Index:    "kibana_sample_data_ecommerce_transform1",
 			Pipeline: "add_timestamp_pipeline",
 		},
 		Frequency: "5m",
@@ -211,7 +211,7 @@ func (t *ElasticsearchHandlerTestSuite) TestTransformDiff() {
 		},
 		Retention: &TransformRetention{
 			Time: TransformRetentionTime{
-				Field: "order_date",
+				Field:  "order_date",
 				MaxAge: "30d",
 			},
 		},
@@ -219,18 +219,19 @@ func (t *ElasticsearchHandlerTestSuite) TestTransformDiff() {
 
 	// When transform not exist yet
 	actual = nil
-	diff, err := t.esHandler.TransformDiff(actual, expected)
+	diff, err := t.esHandler.TransformDiff(actual, expected, nil)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When transform is the same
 	actual = &Transform{
 		Source: &TransformSource{
 			Index: []string{"kibana_sample_data_ecommerce"},
-			Query: map[string]any {
-				"term": map[string]any {
+			Query: map[string]any{
+				"term": map[string]any{
 					"geoip.continent_name": map[string]any{
 						"value": "Asia",
 					},
@@ -238,7 +239,7 @@ func (t *ElasticsearchHandlerTestSuite) TestTransformDiff() {
 			},
 		},
 		Pivot: &TransformPivot{
-			GroupBy: map[string]any {
+			GroupBy: map[string]any{
 				"customer_id": map[string]any{
 					"terms": map[string]any{
 						"field": "customer_id",
@@ -255,7 +256,7 @@ func (t *ElasticsearchHandlerTestSuite) TestTransformDiff() {
 		},
 		Description: "Maximum priced ecommerce data by customer_id in Asia",
 		Destination: &TransformDest{
-			Index: "kibana_sample_data_ecommerce_transform1",
+			Index:    "kibana_sample_data_ecommerce_transform1",
 			Pipeline: "add_timestamp_pipeline",
 		},
 		Frequency: "5m",
@@ -267,23 +268,177 @@ func (t *ElasticsearchHandlerTestSuite) TestTransformDiff() {
 		},
 		Retention: &TransformRetention{
 			Time: TransformRetentionTime{
-				Field: "order_date",
+				Field:  "order_date",
 				MaxAge: "30d",
 			},
 		},
 	}
-	diff, err = t.esHandler.TransformDiff(actual, expected)
+	diff, err = t.esHandler.TransformDiff(actual, expected, actual)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.Empty(t.T(), diff)
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When transform is not the same
 	expected.Description = "plop"
-	diff, err = t.esHandler.TransformDiff(actual, expected)
+	diff, err = t.esHandler.TransformDiff(actual, expected, actual)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
+
+	// When Elastic set default value
+	actual = &Transform{
+		Source: &TransformSource{
+			Index: []string{"kibana_sample_data_ecommerce"},
+			Query: map[string]any{
+				"term": map[string]any{
+					"geoip.continent_name": map[string]any{
+						"value": "Asia",
+					},
+				},
+			},
+		},
+		Pivot: &TransformPivot{
+			GroupBy: map[string]any{
+				"customer_id": map[string]any{
+					"terms": map[string]any{
+						"field": "customer_id",
+					},
+				},
+			},
+			Aggregations: map[string]any{
+				"max_price": map[string]any{
+					"max": map[string]any{
+						"field": "taxful_total_price",
+					},
+				},
+			},
+		},
+		Description: "Maximum priced ecommerce data by customer_id in Asia",
+		Destination: &TransformDest{
+			Index:    "kibana_sample_data_ecommerce_transform1",
+			Pipeline: "add_timestamp_pipeline",
+		},
+		Frequency: "5m",
+		Sync: &TransformSync{
+			Time: TransformSyncTime{
+				Field: "order_date",
+				Delay: "60s",
+			},
+		},
+		Retention: &TransformRetention{
+			Time: TransformRetentionTime{
+				Field:  "order_date",
+				MaxAge: "30d",
+			},
+		},
+		Metadata: map[string]any{
+			"default": "test",
+		},
+	}
+
+	expected = &Transform{
+		Source: &TransformSource{
+			Index: []string{"kibana_sample_data_ecommerce"},
+			Query: map[string]any{
+				"term": map[string]any{
+					"geoip.continent_name": map[string]any{
+						"value": "Asia",
+					},
+				},
+			},
+		},
+		Pivot: &TransformPivot{
+			GroupBy: map[string]any{
+				"customer_id": map[string]any{
+					"terms": map[string]any{
+						"field": "customer_id",
+					},
+				},
+			},
+			Aggregations: map[string]any{
+				"max_price": map[string]any{
+					"max": map[string]any{
+						"field": "taxful_total_price",
+					},
+				},
+			},
+		},
+		Description: "Maximum priced ecommerce data by customer_id in Asia",
+		Destination: &TransformDest{
+			Index:    "kibana_sample_data_ecommerce_transform1",
+			Pipeline: "add_timestamp_pipeline",
+		},
+		Frequency: "5m",
+		Sync: &TransformSync{
+			Time: TransformSyncTime{
+				Field: "order_date",
+				Delay: "60s",
+			},
+		},
+		Retention: &TransformRetention{
+			Time: TransformRetentionTime{
+				Field:  "order_date",
+				MaxAge: "30d",
+			},
+		},
+	}
+
+	original = &Transform{
+		Source: &TransformSource{
+			Index: []string{"kibana_sample_data_ecommerce"},
+			Query: map[string]any{
+				"term": map[string]any{
+					"geoip.continent_name": map[string]any{
+						"value": "Asia",
+					},
+				},
+			},
+		},
+		Pivot: &TransformPivot{
+			GroupBy: map[string]any{
+				"customer_id": map[string]any{
+					"terms": map[string]any{
+						"field": "customer_id",
+					},
+				},
+			},
+			Aggregations: map[string]any{
+				"max_price": map[string]any{
+					"max": map[string]any{
+						"field": "taxful_total_price",
+					},
+				},
+			},
+		},
+		Description: "Maximum priced ecommerce data by customer_id in Asia",
+		Destination: &TransformDest{
+			Index:    "kibana_sample_data_ecommerce_transform1",
+			Pipeline: "add_timestamp_pipeline",
+		},
+		Frequency: "5m",
+		Sync: &TransformSync{
+			Time: TransformSyncTime{
+				Field: "order_date",
+				Delay: "60s",
+			},
+		},
+		Retention: &TransformRetention{
+			Time: TransformRetentionTime{
+				Field:  "order_date",
+				MaxAge: "30d",
+			},
+		},
+	}
+
+	diff, err = t.esHandler.TransformDiff(actual, expected, original)
+	if err != nil {
+		t.Fail(err.Error())
+	}
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), actual, diff.Patched)
 
 }
