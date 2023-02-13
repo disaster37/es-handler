@@ -15,7 +15,7 @@ var urlIndexIngestPipeline = fmt.Sprintf("%s/_ingest/pipeline/test", baseURL)
 func (t *ElasticsearchHandlerTestSuite) TestIngestPipelineGet() {
 
 	result := olivere.IngestGetPipelineResponse{}
-	pipeline := &olivere.IngestGetPipeline {
+	pipeline := &olivere.IngestGetPipeline{
 		Description: "test",
 	}
 	result["test"] = pipeline
@@ -61,7 +61,7 @@ func (t *ElasticsearchHandlerTestSuite) TestIngestPilelineDelete() {
 }
 
 func (t *ElasticsearchHandlerTestSuite) TestIngestPipelineUpdate() {
-	pipeline := &olivere.IngestGetPipeline {
+	pipeline := &olivere.IngestGetPipeline{
 		Description: "test",
 	}
 
@@ -83,11 +83,11 @@ func (t *ElasticsearchHandlerTestSuite) TestIngestPipelineUpdate() {
 }
 
 func (t *ElasticsearchHandlerTestSuite) TestIngestPipelineDiff() {
-	var actual, expected *olivere.IngestGetPipeline 
+	var actual, expected, original *olivere.IngestGetPipeline
 
-	expected = &olivere.IngestGetPipeline {
+	expected = &olivere.IngestGetPipeline{
 		Description: "test",
-		Version: 0,
+		Version:     0,
 		Processors: []map[string]any{
 			{
 				"test": "plop",
@@ -102,16 +102,17 @@ func (t *ElasticsearchHandlerTestSuite) TestIngestPipelineDiff() {
 
 	// When pipeline not exist yet
 	actual = nil
-	diff, err := t.esHandler.IngestPipelineDiff(actual, expected)
+	diff, err := t.esHandler.IngestPipelineDiff(actual, expected, nil)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When pipeline is the same
-	actual = &olivere.IngestGetPipeline {
+	actual = &olivere.IngestGetPipeline{
 		Description: "test",
-		Version: 0,
+		Version:     0,
 		Processors: []map[string]any{
 			{
 				"test": "plop",
@@ -123,11 +124,12 @@ func (t *ElasticsearchHandlerTestSuite) TestIngestPipelineDiff() {
 			},
 		},
 	}
-	diff, err = t.esHandler.IngestPipelineDiff(actual, expected)
+	diff, err = t.esHandler.IngestPipelineDiff(actual, expected, actual)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.Empty(t.T(), diff)
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When pipeline is not the same
 	expected.Processors = []map[string]any{
@@ -135,10 +137,62 @@ func (t *ElasticsearchHandlerTestSuite) TestIngestPipelineDiff() {
 			"test3": "plop3",
 		},
 	}
-	diff, err = t.esHandler.IngestPipelineDiff(actual, expected)
+	diff, err = t.esHandler.IngestPipelineDiff(actual, expected, actual)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
+
+	// When Elastic add default value
+	actual = &olivere.IngestGetPipeline{
+		Description: "test",
+		Version:     10,
+		Processors: []map[string]any{
+			{
+				"test": "plop",
+			},
+		},
+		OnFailure: []map[string]any{
+			{
+				"test2": "plop2",
+			},
+		},
+	}
+
+	expected = &olivere.IngestGetPipeline{
+		Description: "test",
+		Processors: []map[string]any{
+			{
+				"test": "plop",
+			},
+		},
+		OnFailure: []map[string]any{
+			{
+				"test2": "plop2",
+			},
+		},
+	}
+
+	original = &olivere.IngestGetPipeline{
+		Description: "test",
+		Processors: []map[string]any{
+			{
+				"test": "plop",
+			},
+		},
+		OnFailure: []map[string]any{
+			{
+				"test2": "plop2",
+			},
+		},
+	}
+
+	diff, err = t.esHandler.IngestPipelineDiff(actual, expected, original)
+	if err != nil {
+		t.Fail(err.Error())
+	}
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), actual, diff.Patched)
 
 }

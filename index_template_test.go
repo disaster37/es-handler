@@ -95,7 +95,7 @@ func (t *ElasticsearchHandlerTestSuite) TestIndexTemplateUpdate() {
 }
 
 func (t *ElasticsearchHandlerTestSuite) TestIndexTemplateDiff() {
-	var actual, expected *olivere.IndicesGetIndexTemplate
+	var actual, expected, original *olivere.IndicesGetIndexTemplate
 
 	expected = &olivere.IndicesGetIndexTemplate{
 		IndexPatterns: []string{"test-index-template"},
@@ -109,11 +109,12 @@ func (t *ElasticsearchHandlerTestSuite) TestIndexTemplateDiff() {
 
 	// When template not exist yet
 	actual = nil
-	diff, err := t.esHandler.IndexTemplateDiff(actual, expected)
+	diff, err := t.esHandler.IndexTemplateDiff(actual, expected, nil)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When template is the same
 	actual = &olivere.IndicesGetIndexTemplate{
@@ -125,11 +126,12 @@ func (t *ElasticsearchHandlerTestSuite) TestIndexTemplateDiff() {
 			},
 		},
 	}
-	diff, err = t.esHandler.IndexTemplateDiff(actual, expected)
+	diff, err = t.esHandler.IndexTemplateDiff(actual, expected, actual)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.Empty(t.T(), diff)
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When template is not the same
 	expected.Template = &olivere.IndicesGetIndexTemplateData{
@@ -138,10 +140,52 @@ func (t *ElasticsearchHandlerTestSuite) TestIndexTemplateDiff() {
 			"properties.host_name.type": "keyword",
 		},
 	}
-	diff, err = t.esHandler.IndexTemplateDiff(actual, expected)
+	diff, err = t.esHandler.IndexTemplateDiff(actual, expected, actual)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
+
+	// When Elastic add default value
+	actual = &olivere.IndicesGetIndexTemplate{
+		IndexPatterns: []string{"test-index-template"},
+		Priority:      2,
+		Template: &olivere.IndicesGetIndexTemplateData{
+			Settings: map[string]any{
+				"index.refresh_interval": "5s",
+			},
+		},
+		Meta: map[string]interface{}{
+			"default": "test",
+		},
+	}
+
+	expected = &olivere.IndicesGetIndexTemplate{
+		IndexPatterns: []string{"test-index-template"},
+		Priority:      2,
+		Template: &olivere.IndicesGetIndexTemplateData{
+			Settings: map[string]any{
+				"index.refresh_interval": "5s",
+			},
+		},
+	}
+
+	original = &olivere.IndicesGetIndexTemplate{
+		IndexPatterns: []string{"test-index-template"},
+		Priority:      2,
+		Template: &olivere.IndicesGetIndexTemplateData{
+			Settings: map[string]any{
+				"index.refresh_interval": "5s",
+			},
+		},
+	}
+
+	diff, err = t.esHandler.IndexTemplateDiff(actual, expected, original)
+	if err != nil {
+		t.Fail(err.Error())
+	}
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), actual, diff.Patched)
 
 }

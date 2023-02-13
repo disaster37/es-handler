@@ -100,7 +100,7 @@ func (t *ElasticsearchHandlerTestSuite) TestComponentTemplateUpdate() {
 }
 
 func (t *ElasticsearchHandlerTestSuite) TestComponentTemplateDiff() {
-	var actual, expected *olivere.IndicesGetComponentTemplate
+	var actual, expected, original *olivere.IndicesGetComponentTemplate
 
 	expected = &olivere.IndicesGetComponentTemplate{
 		Template: &olivere.IndicesGetComponentTemplateData{
@@ -116,11 +116,12 @@ func (t *ElasticsearchHandlerTestSuite) TestComponentTemplateDiff() {
 
 	// When component not exist yet
 	actual = nil
-	diff, err := t.esHandler.ComponentTemplateDiff(actual, expected)
+	diff, err := t.esHandler.ComponentTemplateDiff(actual, expected, nil)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When component is the same
 	actual = &olivere.IndicesGetComponentTemplate{
@@ -134,21 +135,68 @@ func (t *ElasticsearchHandlerTestSuite) TestComponentTemplateDiff() {
 			},
 		},
 	}
-	diff, err = t.esHandler.ComponentTemplateDiff(actual, expected)
+	diff, err = t.esHandler.ComponentTemplateDiff(actual, expected, actual)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.Empty(t.T(), diff)
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When component is not the same
 	expected.Template.Mappings = map[string]any{
 		"_source.enabled":           false,
 		"properties.host_name.type": "keyword",
 	}
-	diff, err = t.esHandler.ComponentTemplateDiff(actual, expected)
+	diff, err = t.esHandler.ComponentTemplateDiff(actual, expected, actual)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
+
+	// When elastic add default value
+	actual = &olivere.IndicesGetComponentTemplate{
+		Template: &olivere.IndicesGetComponentTemplateData{
+			Settings: map[string]any{
+				"index.refresh_interval": "5s",
+			},
+			Mappings: map[string]any{
+				"_source.enabled":           true,
+				"properties.host_name.type": "keyword",
+				"default":                   "test",
+			},
+		},
+	}
+
+	expected = &olivere.IndicesGetComponentTemplate{
+		Template: &olivere.IndicesGetComponentTemplateData{
+			Settings: map[string]any{
+				"index.refresh_interval": "5s",
+			},
+			Mappings: map[string]any{
+				"_source.enabled":           true,
+				"properties.host_name.type": "keyword",
+			},
+		},
+	}
+
+	original = &olivere.IndicesGetComponentTemplate{
+		Template: &olivere.IndicesGetComponentTemplateData{
+			Settings: map[string]any{
+				"index.refresh_interval": "5s",
+			},
+			Mappings: map[string]any{
+				"_source.enabled":           true,
+				"properties.host_name.type": "keyword",
+			},
+		},
+	}
+
+	diff, err = t.esHandler.ComponentTemplateDiff(actual, expected, original)
+	if err != nil {
+		t.Fail(err.Error())
+	}
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), actual, diff.Patched)
 
 }

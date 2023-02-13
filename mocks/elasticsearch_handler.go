@@ -8,6 +8,7 @@ import (
 	reflect "reflect"
 
 	eshandler "github.com/disaster37/es-handler/v8"
+	patch "github.com/disaster37/es-handler/v8/patch"
 	elasticsearch "github.com/elastic/go-elasticsearch/v8"
 	gomock "github.com/golang/mock/gomock"
 	elastic "github.com/olivere/elastic/v7"
@@ -81,18 +82,18 @@ func (mr *MockElasticsearchHandlerMockRecorder) ComponentTemplateDelete(arg0 int
 }
 
 // ComponentTemplateDiff mocks base method.
-func (m *MockElasticsearchHandler) ComponentTemplateDiff(arg0, arg1 *elastic.IndicesGetComponentTemplate) (string, error) {
+func (m *MockElasticsearchHandler) ComponentTemplateDiff(arg0, arg1, arg2 *elastic.IndicesGetComponentTemplate) (*patch.PatchResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ComponentTemplateDiff", arg0, arg1)
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "ComponentTemplateDiff", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*patch.PatchResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ComponentTemplateDiff indicates an expected call of ComponentTemplateDiff.
-func (mr *MockElasticsearchHandlerMockRecorder) ComponentTemplateDiff(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockElasticsearchHandlerMockRecorder) ComponentTemplateDiff(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ComponentTemplateDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).ComponentTemplateDiff), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ComponentTemplateDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).ComponentTemplateDiff), arg0, arg1, arg2)
 }
 
 // ComponentTemplateGet mocks base method.
@@ -139,18 +140,18 @@ func (mr *MockElasticsearchHandlerMockRecorder) ILMDelete(arg0 interface{}) *gom
 }
 
 // ILMDiff mocks base method.
-func (m *MockElasticsearchHandler) ILMDiff(arg0, arg1 *elastic.XPackIlmGetLifecycleResponse) (string, error) {
+func (m *MockElasticsearchHandler) ILMDiff(arg0, arg1, arg2 *elastic.XPackIlmGetLifecycleResponse) (*patch.PatchResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ILMDiff", arg0, arg1)
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "ILMDiff", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*patch.PatchResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ILMDiff indicates an expected call of ILMDiff.
-func (mr *MockElasticsearchHandlerMockRecorder) ILMDiff(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockElasticsearchHandlerMockRecorder) ILMDiff(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ILMDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).ILMDiff), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ILMDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).ILMDiff), arg0, arg1, arg2)
 }
 
 // ILMGet mocks base method.
@@ -197,18 +198,18 @@ func (mr *MockElasticsearchHandlerMockRecorder) IndexTemplateDelete(arg0 interfa
 }
 
 // IndexTemplateDiff mocks base method.
-func (m *MockElasticsearchHandler) IndexTemplateDiff(arg0, arg1 *elastic.IndicesGetIndexTemplate) (string, error) {
+func (m *MockElasticsearchHandler) IndexTemplateDiff(arg0, arg1, arg2 *elastic.IndicesGetIndexTemplate) (*patch.PatchResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IndexTemplateDiff", arg0, arg1)
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "IndexTemplateDiff", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*patch.PatchResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // IndexTemplateDiff indicates an expected call of IndexTemplateDiff.
-func (mr *MockElasticsearchHandlerMockRecorder) IndexTemplateDiff(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockElasticsearchHandlerMockRecorder) IndexTemplateDiff(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexTemplateDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).IndexTemplateDiff), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexTemplateDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).IndexTemplateDiff), arg0, arg1, arg2)
 }
 
 // IndexTemplateGet mocks base method.
@@ -255,18 +256,18 @@ func (mr *MockElasticsearchHandlerMockRecorder) IngestPipelineDelete(arg0 interf
 }
 
 // IngestPipelineDiff mocks base method.
-func (m *MockElasticsearchHandler) IngestPipelineDiff(arg0, arg1 *elastic.IngestGetPipeline) (string, error) {
+func (m *MockElasticsearchHandler) IngestPipelineDiff(arg0, arg1, arg2 *elastic.IngestGetPipeline) (*patch.PatchResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IngestPipelineDiff", arg0, arg1)
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "IngestPipelineDiff", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*patch.PatchResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // IngestPipelineDiff indicates an expected call of IngestPipelineDiff.
-func (mr *MockElasticsearchHandlerMockRecorder) IngestPipelineDiff(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockElasticsearchHandlerMockRecorder) IngestPipelineDiff(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IngestPipelineDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).IngestPipelineDiff), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IngestPipelineDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).IngestPipelineDiff), arg0, arg1, arg2)
 }
 
 // IngestPipelineGet mocks base method.
@@ -384,18 +385,18 @@ func (mr *MockElasticsearchHandlerMockRecorder) RoleDelete(arg0 interface{}) *go
 }
 
 // RoleDiff mocks base method.
-func (m *MockElasticsearchHandler) RoleDiff(arg0, arg1 *eshandler.XPackSecurityRole) (string, error) {
+func (m *MockElasticsearchHandler) RoleDiff(arg0, arg1, arg2 *eshandler.XPackSecurityRole) (*patch.PatchResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RoleDiff", arg0, arg1)
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "RoleDiff", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*patch.PatchResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // RoleDiff indicates an expected call of RoleDiff.
-func (mr *MockElasticsearchHandlerMockRecorder) RoleDiff(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockElasticsearchHandlerMockRecorder) RoleDiff(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RoleDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).RoleDiff), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RoleDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).RoleDiff), arg0, arg1, arg2)
 }
 
 // RoleGet mocks base method.
@@ -428,18 +429,18 @@ func (mr *MockElasticsearchHandlerMockRecorder) RoleMappingDelete(arg0 interface
 }
 
 // RoleMappingDiff mocks base method.
-func (m *MockElasticsearchHandler) RoleMappingDiff(arg0, arg1 *elastic.XPackSecurityRoleMapping) (string, error) {
+func (m *MockElasticsearchHandler) RoleMappingDiff(arg0, arg1, arg2 *elastic.XPackSecurityRoleMapping) (*patch.PatchResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RoleMappingDiff", arg0, arg1)
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "RoleMappingDiff", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*patch.PatchResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // RoleMappingDiff indicates an expected call of RoleMappingDiff.
-func (mr *MockElasticsearchHandlerMockRecorder) RoleMappingDiff(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockElasticsearchHandlerMockRecorder) RoleMappingDiff(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RoleMappingDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).RoleMappingDiff), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RoleMappingDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).RoleMappingDiff), arg0, arg1, arg2)
 }
 
 // RoleMappingGet mocks base method.
@@ -500,18 +501,18 @@ func (mr *MockElasticsearchHandlerMockRecorder) SLMDelete(arg0 interface{}) *gom
 }
 
 // SLMDiff mocks base method.
-func (m *MockElasticsearchHandler) SLMDiff(arg0, arg1 *eshandler.SnapshotLifecyclePolicySpec) (string, error) {
+func (m *MockElasticsearchHandler) SLMDiff(arg0, arg1, arg2 *eshandler.SnapshotLifecyclePolicySpec) (*patch.PatchResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SLMDiff", arg0, arg1)
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "SLMDiff", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*patch.PatchResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // SLMDiff indicates an expected call of SLMDiff.
-func (mr *MockElasticsearchHandlerMockRecorder) SLMDiff(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockElasticsearchHandlerMockRecorder) SLMDiff(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SLMDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).SLMDiff), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SLMDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).SLMDiff), arg0, arg1, arg2)
 }
 
 // SLMGet mocks base method.
@@ -570,18 +571,18 @@ func (mr *MockElasticsearchHandlerMockRecorder) SnapshotRepositoryDelete(arg0 in
 }
 
 // SnapshotRepositoryDiff mocks base method.
-func (m *MockElasticsearchHandler) SnapshotRepositoryDiff(arg0, arg1 *elastic.SnapshotRepositoryMetaData) (string, error) {
+func (m *MockElasticsearchHandler) SnapshotRepositoryDiff(arg0, arg1, arg2 *elastic.SnapshotRepositoryMetaData) (*patch.PatchResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SnapshotRepositoryDiff", arg0, arg1)
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "SnapshotRepositoryDiff", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*patch.PatchResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // SnapshotRepositoryDiff indicates an expected call of SnapshotRepositoryDiff.
-func (mr *MockElasticsearchHandlerMockRecorder) SnapshotRepositoryDiff(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockElasticsearchHandlerMockRecorder) SnapshotRepositoryDiff(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SnapshotRepositoryDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).SnapshotRepositoryDiff), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SnapshotRepositoryDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).SnapshotRepositoryDiff), arg0, arg1, arg2)
 }
 
 // SnapshotRepositoryGet mocks base method.
@@ -628,18 +629,18 @@ func (mr *MockElasticsearchHandlerMockRecorder) TransformDelete(arg0 interface{}
 }
 
 // TransformDiff mocks base method.
-func (m *MockElasticsearchHandler) TransformDiff(arg0, arg1 *eshandler.Transform) (string, error) {
+func (m *MockElasticsearchHandler) TransformDiff(arg0, arg1, arg2 *eshandler.Transform) (*patch.PatchResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TransformDiff", arg0, arg1)
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "TransformDiff", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*patch.PatchResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // TransformDiff indicates an expected call of TransformDiff.
-func (mr *MockElasticsearchHandlerMockRecorder) TransformDiff(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockElasticsearchHandlerMockRecorder) TransformDiff(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TransformDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).TransformDiff), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TransformDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).TransformDiff), arg0, arg1, arg2)
 }
 
 // TransformGet mocks base method.
@@ -700,18 +701,18 @@ func (mr *MockElasticsearchHandlerMockRecorder) UserDelete(arg0 interface{}) *go
 }
 
 // UserDiff mocks base method.
-func (m *MockElasticsearchHandler) UserDiff(arg0, arg1 *elastic.XPackSecurityPutUserRequest) (string, error) {
+func (m *MockElasticsearchHandler) UserDiff(arg0, arg1, arg2 *elastic.XPackSecurityPutUserRequest) (*patch.PatchResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UserDiff", arg0, arg1)
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "UserDiff", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*patch.PatchResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UserDiff indicates an expected call of UserDiff.
-func (mr *MockElasticsearchHandlerMockRecorder) UserDiff(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockElasticsearchHandlerMockRecorder) UserDiff(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).UserDiff), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).UserDiff), arg0, arg1, arg2)
 }
 
 // UserGet mocks base method.
@@ -763,18 +764,18 @@ func (mr *MockElasticsearchHandlerMockRecorder) WatchDelete(arg0 interface{}) *g
 }
 
 // WatchDiff mocks base method.
-func (m *MockElasticsearchHandler) WatchDiff(arg0, arg1 *elastic.XPackWatch) (string, error) {
+func (m *MockElasticsearchHandler) WatchDiff(arg0, arg1, arg2 *elastic.XPackWatch) (*patch.PatchResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WatchDiff", arg0, arg1)
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "WatchDiff", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*patch.PatchResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // WatchDiff indicates an expected call of WatchDiff.
-func (mr *MockElasticsearchHandlerMockRecorder) WatchDiff(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockElasticsearchHandlerMockRecorder) WatchDiff(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WatchDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).WatchDiff), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WatchDiff", reflect.TypeOf((*MockElasticsearchHandler)(nil).WatchDiff), arg0, arg1, arg2)
 }
 
 // WatchGet mocks base method.

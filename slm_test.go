@@ -110,7 +110,7 @@ func (t *ElasticsearchHandlerTestSuite) TestSLMUpdate() {
 }
 
 func (t *ElasticsearchHandlerTestSuite) TestSLMDiff() {
-	var actual, expected *SnapshotLifecyclePolicySpec
+	var actual, expected, original *SnapshotLifecyclePolicySpec
 
 	expected = &SnapshotLifecyclePolicySpec{
 		Name:       "<daily-snap-{now/d}>",
@@ -130,11 +130,12 @@ func (t *ElasticsearchHandlerTestSuite) TestSLMDiff() {
 
 	// When SLM not exist yet
 	actual = nil
-	diff, err := t.esHandler.SLMDiff(actual, expected)
+	diff, err := t.esHandler.SLMDiff(actual, expected, nil)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When policy is the same
 	actual = &SnapshotLifecyclePolicySpec{
@@ -152,19 +153,31 @@ func (t *ElasticsearchHandlerTestSuite) TestSLMDiff() {
 			MaxCount:    10,
 		},
 	}
-	diff, err = t.esHandler.SLMDiff(actual, expected)
+	diff, err = t.esHandler.SLMDiff(actual, expected, nil)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.Empty(t.T(), diff)
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
-	// When policy is the same because of exclude
-	actual = &SnapshotLifecyclePolicySpec{
+	// When policy is not the same
+	expected.Repository = "repo2"
+	diff, err = t.esHandler.SLMDiff(actual, expected, nil)
+	if err != nil {
+		t.Fail(err.Error())
+	}
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
+
+	// When default value is set by Elasticsearch
+	expected = &SnapshotLifecyclePolicySpec{
 		Name:       "<daily-snap-{now/d}>",
 		Repository: "repo",
 		Schedule:   "0 30 1 * * ?",
 		Config: ElasticsearchSLMConfig{
 			Indices:            []string{"test-*"},
+			IgnoreUnavailable:  false,
+			IncludeGlobalState: false,
 		},
 		Retention: &ElasticsearchSLMRetention{
 			ExpireAfter: "7d",
@@ -172,18 +185,44 @@ func (t *ElasticsearchHandlerTestSuite) TestSLMDiff() {
 			MaxCount:    10,
 		},
 	}
-	diff, err = t.esHandler.SLMDiff(actual, expected)
-	if err != nil {
-		t.Fail(err.Error())
-	}
-	assert.Empty(t.T(), diff)
 
-	// When policy is not the same
-	expected.Repository = "repo2"
-	diff, err = t.esHandler.SLMDiff(actual, expected)
+	original = &SnapshotLifecyclePolicySpec{
+		Name:       "<daily-snap-{now/d}>",
+		Repository: "repo",
+		Schedule:   "0 30 1 * * ?",
+		Config: ElasticsearchSLMConfig{
+			Indices:            []string{"test-*"},
+			IgnoreUnavailable:  false,
+			IncludeGlobalState: false,
+		},
+		Retention: &ElasticsearchSLMRetention{
+			ExpireAfter: "7d",
+			MinCount:    5,
+			MaxCount:    10,
+		},
+	}
+
+	actual = &SnapshotLifecyclePolicySpec{
+		Name:       "<daily-snap-{now/d}>",
+		Repository: "repo",
+		Schedule:   "0 30 1 * * ?",
+		Config: ElasticsearchSLMConfig{
+			Indices:         []string{"test-*"},
+			Partial:         true,
+			ExpendWildcards: "plop",
+		},
+		Retention: &ElasticsearchSLMRetention{
+			ExpireAfter: "7d",
+			MinCount:    5,
+			MaxCount:    10,
+		},
+	}
+
+	diff, err = t.esHandler.SLMDiff(actual, expected, original)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), actual, diff.Patched)
 
 }

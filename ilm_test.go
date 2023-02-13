@@ -135,7 +135,7 @@ func (t *ElasticsearchHandlerTestSuite) TestILMUpdate() {
 }
 
 func (t *ElasticsearchHandlerTestSuite) TestILMDiff() {
-	var actual, expected *olivere.XPackIlmGetLifecycleResponse
+	var actual, expected, original *olivere.XPackIlmGetLifecycleResponse
 
 	rawPolicy := `
 {
@@ -152,9 +152,7 @@ func (t *ElasticsearchHandlerTestSuite) TestILMDiff() {
 			"delete": {
 				"min_age": "31d",
 				"actions": {
-					"delete": {
-						"delete_searchable_snapshot": true
-					}
+					"delete": {}
 				}
 			}
 		}
@@ -169,24 +167,61 @@ func (t *ElasticsearchHandlerTestSuite) TestILMDiff() {
 
 	// When ILM not exist yet
 	actual = nil
-	diff, err := t.esHandler.ILMDiff(actual, expected)
+	diff, err := t.esHandler.ILMDiff(actual, expected, nil)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When policy is the same
 	actual = &olivere.XPackIlmGetLifecycleResponse{}
 	if err := json.Unmarshal([]byte(rawPolicy), &actual); err != nil {
 		panic(err)
 	}
-	diff, err = t.esHandler.ILMDiff(actual, expected)
+	diff, err = t.esHandler.ILMDiff(actual, expected, actual)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.Empty(t.T(), diff)
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When policy is not the same
+	rawPolicy = `
+{
+	"policy": {
+		"phases": {
+			"warm": {
+				"min_age": "20d",
+				"actions": {
+					"forcemerge": {
+						"max_num_segments": 1
+					}
+				}
+			},
+			"delete": {
+				"min_age": "20d",
+				"actions": {
+					"delete": {
+					}
+				}
+			}
+		}
+	}
+}
+	`
+	expected = &olivere.XPackIlmGetLifecycleResponse{}
+	if err := json.Unmarshal([]byte(rawPolicy), expected); err != nil {
+		panic(err)
+	}
+	diff, err = t.esHandler.ILMDiff(actual, expected, actual)
+	if err != nil {
+		t.Fail(err.Error())
+	}
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
+
+	// When elastic add default values
 	rawPolicy = `
 {
 	"policy": {
@@ -211,14 +246,48 @@ func (t *ElasticsearchHandlerTestSuite) TestILMDiff() {
 	}
 }
 	`
+	actual = &olivere.XPackIlmGetLifecycleResponse{}
+	if err := json.Unmarshal([]byte(rawPolicy), actual); err != nil {
+		panic(err)
+	}
+	rawPolicy = `
+{
+	"policy": {
+		"phases": {
+			"warm": {
+				"min_age": "20d",
+				"actions": {
+					"forcemerge": {
+						"max_num_segments": 1
+					}
+				}
+			},
+			"delete": {
+				"min_age": "20d",
+				"actions": {
+					"delete": {
+					}
+				}
+			}
+		}
+	}
+}
+	`
 	expected = &olivere.XPackIlmGetLifecycleResponse{}
 	if err := json.Unmarshal([]byte(rawPolicy), expected); err != nil {
 		panic(err)
 	}
-	diff, err = t.esHandler.ILMDiff(actual, expected)
+
+	original = &olivere.XPackIlmGetLifecycleResponse{}
+	if err := json.Unmarshal([]byte(rawPolicy), original); err != nil {
+		panic(err)
+	}
+
+	diff, err = t.esHandler.ILMDiff(actual, expected, original)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), actual, diff.Patched)
 
 }

@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"io"
 
+	"github.com/disaster37/es-handler/v8/patch"
+	jsonIterator "github.com/json-iterator/go"
 	olivere "github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
 )
@@ -158,6 +160,22 @@ func (h *ElasticsearchHandlerImpl) UserGet(name string) (user *olivere.XPackSecu
 }
 
 // UserDiff permit to check if 2 users are the same
-func (h *ElasticsearchHandlerImpl) UserDiff(actual, expected *olivere.XPackSecurityPutUserRequest) (diff string, err error) {
-	return StandardDiff(actual, expected, h.log, nil)
+func (h *ElasticsearchHandlerImpl) UserDiff(actualObject, expectedObject, originalObject *olivere.XPackSecurityPutUserRequest) (patchResult *patch.PatchResult, err error) {
+	// If not yet exist
+	if actualObject == nil {
+		expected, err := jsonIterator.ConfigCompatibleWithStandardLibrary.Marshal(expectedObject)
+		if err != nil {
+			return nil, errors.Wrap(err, "Failed to convert expected object to byte sequence")
+		}
+
+		return &patch.PatchResult{
+			Patch:    expected,
+			Current:  expected,
+			Modified: expected,
+			Original: nil,
+			Patched:  expectedObject,
+		}, nil
+	}
+
+	return patch.DefaultPatchMaker.Calculate(actualObject, expectedObject, originalObject)
 }

@@ -203,7 +203,7 @@ func (t *ElasticsearchHandlerTestSuite) TestWatchUpdate() {
 }
 
 func (t *ElasticsearchHandlerTestSuite) TestWatchDiff() {
-	var actual, expected *olivere.XPackWatch
+	var actual, expected, original *olivere.XPackWatch
 	rawWatch := `
 	{
 		"trigger" : {
@@ -258,22 +258,24 @@ func (t *ElasticsearchHandlerTestSuite) TestWatchDiff() {
 
 	// When Watch not exist yet
 	actual = nil
-	diff, err := t.esHandler.WatchDiff(actual, expected)
+	diff, err := t.esHandler.WatchDiff(actual, expected, nil)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When watch is the same
 	actual = &olivere.XPackWatch{}
 	if err := json.Unmarshal([]byte(rawWatch), &actual); err != nil {
 		panic(err)
 	}
-	diff, err = t.esHandler.WatchDiff(actual, expected)
+	diff, err = t.esHandler.WatchDiff(actual, expected, actual)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.Empty(t.T(), diff)
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When watch is not the same
 	rawWatch = `
@@ -326,10 +328,128 @@ func (t *ElasticsearchHandlerTestSuite) TestWatchDiff() {
 	if err := json.Unmarshal([]byte(rawWatch), expected); err != nil {
 		panic(err)
 	}
-	diff, err = t.esHandler.WatchDiff(actual, expected)
+	diff, err = t.esHandler.WatchDiff(actual, expected, actual)
 	if err != nil {
 		t.Fail(err.Error())
 	}
-	assert.NotEmpty(t.T(), diff)
+	assert.False(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), expected, diff.Patched)
+
+	// When Elastic add default value
+	rawWatch = `
+	{
+		"trigger" : {
+		  "schedule" : { "cron" : "0 0/1 * * * ?" }
+		},
+		"input" : {
+		  "search" : {
+			"request" : {
+			  "indices" : [
+				"logstash*"
+			  ],
+			  "body" : {
+				"query" : {
+				  "bool" : {
+					"must" : {
+					  "match": {
+						 "response": 404
+					  }
+					},
+					"filter" : {
+					  "range": {
+						"@timestamp": {
+						  "from": "{{ctx.trigger.scheduled_time}}||-5m",
+						  "to": "{{ctx.trigger.triggered_time}}"
+						}
+					  }
+					}
+				  }
+				}
+			  }
+			}
+		  }
+		},
+		"condition" : {
+		  "compare" : { "ctx.payload.hits.total" : { "gt" : 0 }}
+		},
+		"actions" : {
+		  "email_admin" : {
+			"email" : {
+			  "to" : "admin@domain.host.com",
+			  "subject" : "405 recently encountered"
+			}
+		  }
+		},
+		"metadata": {
+			"default": "test"
+		}
+	}
+	`
+	actual = &olivere.XPackWatch{}
+	if err := json.Unmarshal([]byte(rawWatch), actual); err != nil {
+		panic(err)
+	}
+
+	rawWatch = `
+	{
+		"trigger" : {
+		  "schedule" : { "cron" : "0 0/1 * * * ?" }
+		},
+		"input" : {
+		  "search" : {
+			"request" : {
+			  "indices" : [
+				"logstash*"
+			  ],
+			  "body" : {
+				"query" : {
+				  "bool" : {
+					"must" : {
+					  "match": {
+						 "response": 404
+					  }
+					},
+					"filter" : {
+					  "range": {
+						"@timestamp": {
+						  "from": "{{ctx.trigger.scheduled_time}}||-5m",
+						  "to": "{{ctx.trigger.triggered_time}}"
+						}
+					  }
+					}
+				  }
+				}
+			  }
+			}
+		  }
+		},
+		"condition" : {
+		  "compare" : { "ctx.payload.hits.total" : { "gt" : 0 }}
+		},
+		"actions" : {
+		  "email_admin" : {
+			"email" : {
+			  "to" : "admin@domain.host.com",
+			  "subject" : "405 recently encountered"
+			}
+		  }
+		}
+	}
+	`
+	expected = &olivere.XPackWatch{}
+	if err := json.Unmarshal([]byte(rawWatch), expected); err != nil {
+		panic(err)
+	}
+	original = &olivere.XPackWatch{}
+	if err := json.Unmarshal([]byte(rawWatch), original); err != nil {
+		panic(err)
+	}
+
+	diff, err = t.esHandler.WatchDiff(actual, expected, original)
+	if err != nil {
+		t.Fail(err.Error())
+	}
+	assert.True(t.T(), diff.IsEmpty())
+	assert.Equal(t.T(), actual, diff.Patched)
 
 }

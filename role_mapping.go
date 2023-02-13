@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"io"
 
+	"github.com/disaster37/es-handler/v8/patch"
+	jsonIterator "github.com/json-iterator/go"
 	olivere "github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
 )
@@ -104,6 +106,22 @@ func (h *ElasticsearchHandlerImpl) RoleMappingGet(name string) (roleMapping *oli
 }
 
 // RoleMappingDiff permit to check if 2 role mapping are the same
-func (h *ElasticsearchHandlerImpl) RoleMappingDiff(actual, expected *olivere.XPackSecurityRoleMapping) (diff string, err error) {
-	return StandardDiff(actual, expected, h.log, nil)
+func (h *ElasticsearchHandlerImpl) RoleMappingDiff(actualObject, expectedObject, originalObject *olivere.XPackSecurityRoleMapping) (patchResult *patch.PatchResult, err error) {
+	// If not yet exist
+	if actualObject == nil {
+		expected, err := jsonIterator.ConfigCompatibleWithStandardLibrary.Marshal(expectedObject)
+		if err != nil {
+			return nil, errors.Wrap(err, "Failed to convert expected object to byte sequence")
+		}
+
+		return &patch.PatchResult{
+			Patch:    expected,
+			Current:  expected,
+			Modified: expected,
+			Original: nil,
+			Patched:  expectedObject,
+		}, nil
+	}
+
+	return patch.DefaultPatchMaker.Calculate(actualObject, expectedObject, originalObject)
 }
