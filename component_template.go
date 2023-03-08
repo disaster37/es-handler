@@ -120,5 +120,5 @@ func (h *ElasticsearchHandlerImpl) ComponentTemplateDiff(actualObject, expectedO
 		}, nil
 	}
 
-	return patch.DefaultPatchMaker.Calculate(actualObject, expectedObject, originalObject)
+	return patch.DefaultPatchMaker.Calculate(actualObject, expectedObject, originalObject, patch.ConvertTemplateSetting)
 }
