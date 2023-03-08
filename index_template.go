@@ -120,5 +120,5 @@ func (h *ElasticsearchHandlerImpl) IndexTemplateDiff(actualObject, expectedObjec
 		}, nil
 	}
 
-	return patch.DefaultPatchMaker.Calculate(actualObject, expectedObject, originalObject)
+	return patch.DefaultPatchMaker.Calculate(actualObject, expectedObject, originalObject, patch.ConvertIndexTemplateSetting)
 }
