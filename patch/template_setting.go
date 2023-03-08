@@ -1,9 +1,10 @@
 package patch
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
+
+	json "github.com/json-iterator/go"
 
 	olivere "github.com/olivere/elastic/v7"
 )
@@ -15,7 +16,7 @@ type IndicesGetComponentTemplate struct {
 func (o *IndicesGetComponentTemplate) UnmarshalJSON(data []byte) error {
 
 	tmp := &olivere.IndicesGetComponentTemplate{}
-	if err := json.Unmarshal(data, &tmp); err != nil {
+	if err := json.ConfigCompatibleWithStandardLibrary.Unmarshal(data, &tmp); err != nil {
 		return err
 	}
 
@@ -61,20 +62,20 @@ func ConvertTemplateSetting(actualByte []byte, expectedByte []byte) ([]byte, []b
 	expected := &IndicesGetComponentTemplate{}
 	var err error
 
-	if err = json.Unmarshal(actualByte, actual); err != nil {
+	if err = json.ConfigCompatibleWithStandardLibrary.Unmarshal(actualByte, actual); err != nil {
 		return nil, nil, err
 	}
 
-	if err = json.Unmarshal(expectedByte, expected); err != nil {
+	if err = json.ConfigCompatibleWithStandardLibrary.Unmarshal(expectedByte, expected); err != nil {
 		return nil, nil, err
 	}
 
-	actualByte, err = json.Marshal(actual)
+	actualByte, err = json.ConfigCompatibleWithStandardLibrary.Marshal(actual)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	expectedByte, err = json.Marshal(expected)
+	expectedByte, err = json.ConfigCompatibleWithStandardLibrary.Marshal(expected)
 	if err != nil {
 		return nil, nil, err
 	}
