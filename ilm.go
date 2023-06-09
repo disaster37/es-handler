@@ -12,10 +12,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-var ignoreILMPolicyDiff = map[string]any{
-	"phases.delete.actions.delete.delete_searchable_snapshot": true,
-}
-
 // ILMUpdate permit to update or create policy
 func (h *ElasticsearchHandlerImpl) ILMUpdate(name string, policy *olivere.XPackIlmGetLifecycleResponse) (err error) {
 

@@ -11,10 +11,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-var ignoreRoleDiff = map[string]any{
-	"transient_metadata.enabled": true,
-}
-
 // Some fix not provided by olivere
 type XPackSecurityRole struct {
 	RunAs             []string                             `json:"run_as,omitempty"`
@@ -35,10 +31,11 @@ type XPackSecurityApplicationPrivileges struct {
 
 // XPackSecurityIndicesPermissions is the indices permission object
 type XPackSecurityIndicesPermissions struct {
-	Names         []string    `json:"names"`
-	Privileges    []string    `json:"privileges"`
-	FieldSecurity interface{} `json:"field_security,omitempty"`
-	Query         string      `json:"query,omitempty"`
+	Names                  []string    `json:"names"`
+	Privileges             []string    `json:"privileges"`
+	FieldSecurity          interface{} `json:"field_security,omitempty"`
+	Query                  string      `json:"query,omitempty"`
+	AllowRestrictedIndices bool        `json:"allow_restricted_indices,omitempty"`
 }
 
 // RoleUpdate permit to update role

@@ -12,10 +12,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-var ignoreWatchDiff = map[string]any{
-	"status": nil,
-}
-
 // ILMUpdate permit to update or create policy
 func (h *ElasticsearchHandlerImpl) WatchUpdate(name string, watch *olivere.XPackWatch) (err error) {
 

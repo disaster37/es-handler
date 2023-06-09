@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"emperror.dev/errors"
+	"github.com/pkg/errors"
 	"github.com/disaster37/k8s-objectmatcher/patch"
 	json "github.com/json-iterator/go"
 )

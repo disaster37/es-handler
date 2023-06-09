@@ -1,25 +1,25 @@
 module github.com/disaster37/es-handler/v8
 
-go 1.18
+go 1.20
 
 require (
-	emperror.dev/errors v0.8.1
-	github.com/disaster37/k8s-objectmatcher v1.8.1
-	github.com/elastic/go-elasticsearch/v8 v8.4.0
+	github.com/disaster37/k8s-objectmatcher v1.8.2
+	github.com/elastic/go-elasticsearch/v8 v8.8.1
 	github.com/elastic/go-ucfg v0.8.6
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.9
-	github.com/jarcoal/httpmock v1.2.0
+	github.com/jarcoal/httpmock v1.3.0
 	github.com/json-iterator/go v1.1.12
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/pkg/errors v0.9.1
-	github.com/sirupsen/logrus v1.9.0
-	github.com/stretchr/testify v1.8.0
+	github.com/sirupsen/logrus v1.9.3
+	github.com/stretchr/testify v1.8.4
 )
 
 require (
+	emperror.dev/errors v0.8.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/elastic/elastic-transport-go/v8 v8.1.0 // indirect
+	github.com/elastic/elastic-transport-go/v8 v8.3.0 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
