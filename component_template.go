@@ -6,7 +6,8 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/disaster37/es-handler/v8/patch"
+	"github.com/disaster37/generic-objectmatcher/patch"
+	localpatch "github.com/disaster37/es-handler/v8/patch"
 	jsonIterator "github.com/json-iterator/go"
 	olivere "github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
@@ -120,5 +121,5 @@ func (h *ElasticsearchHandlerImpl) ComponentTemplateDiff(actualObject, expectedO
 		}, nil
 	}
 
-	return patch.DefaultPatchMaker.Calculate(actualObject, expectedObject, originalObject, patch.ConvertComponentTemplateSetting)
+	return patch.DefaultPatchMaker.Calculate(actualObject, expectedObject, originalObject, localpatch.ConvertComponentTemplateSetting)
 }

@@ -1,7 +1,7 @@
 package eshandler
 
 import (
-	"github.com/disaster37/es-handler/v8/patch"
+	"github.com/disaster37/generic-objectmatcher/patch"
 	elastic "github.com/elastic/go-elasticsearch/v8"
 	olivere "github.com/olivere/elastic/v7"
 	"github.com/sirupsen/logrus"

@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/disaster37/es-handler/v8/patch"
+	"github.com/disaster37/generic-objectmatcher/patch"
 	jsonIterator "github.com/json-iterator/go"
 	olivere "github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"

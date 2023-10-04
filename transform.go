@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/disaster37/es-handler/v8/patch"
+	"github.com/disaster37/generic-objectmatcher/patch"
 	jsonIterator "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 )
@@ -174,7 +174,7 @@ func (h *ElasticsearchHandlerImpl) TransformDiff(actualObject, expectedObject, o
 			Current:  expected,
 			Modified: expected,
 			Original: nil,
-			Patched: expectedObject,
+			Patched:  expectedObject,
 		}, nil
 	}
 

@@ -3,7 +3,7 @@ module github.com/disaster37/es-handler/v8
 go 1.20
 
 require (
-	github.com/disaster37/k8s-objectmatcher v1.8.2
+	github.com/disaster37/generic-objectmatcher v1.0.2
 	github.com/elastic/go-elasticsearch/v8 v8.8.1
 	github.com/elastic/go-ucfg v0.8.6
 	github.com/golang/mock v1.6.0
@@ -19,6 +19,7 @@ require (
 require (
 	emperror.dev/errors v0.8.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/disaster37/k8s-objectmatcher v1.8.2 // indirect
 	github.com/elastic/elastic-transport-go/v8 v8.3.0 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
@@ -32,6 +33,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
+	go.uber.org/mock v0.3.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/net v0.3.1-0.20221206200815-1e63c2f08a10 // indirect
 	golang.org/x/sys v0.3.0 // indirect
