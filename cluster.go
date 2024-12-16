@@ -1,6 +1,7 @@
 package eshandler
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -37,4 +38,128 @@ func (h *ElasticsearchHandlerImpl) ClusterHealth() (health *olivere.ClusterHealt
 	}
 
 	return health, nil
+}
+
+// EnableRoutingRebalance permit to enable cluster routing rebalance
+// It put `cluster.routing.rebalance.enable` to all
+func (h *ElasticsearchHandlerImpl) EnableRoutingRebalance() (err error) {
+	settings := map[string]interface{}{
+		"persistent": map[string]interface{}{
+			"cluster.routing.rebalance.enable": "all",
+		},
+	}
+
+	data, err := json.Marshal(settings)
+	if err != nil {
+		return err
+	}
+
+	res, err := h.client.Cluster.PutSettings(
+		bytes.NewReader(data),
+		h.client.Cluster.PutSettings.WithPretty(),
+	)
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return errors.Errorf("Error when set Elasticsearch cluster setting: %s", res.String())
+	}
+
+	return nil
+}
+
+// DisableRoutingRebalance permit to disable cluster routing rebalance
+// It put `cluster.routing.rebalance.enable` to none
+func (h *ElasticsearchHandlerImpl) DisableRoutingRebalance() (err error) {
+	settings := map[string]interface{}{
+		"persistent": map[string]interface{}{
+			"cluster.routing.rebalance.enable": "none",
+		},
+	}
+
+	data, err := json.Marshal(settings)
+	if err != nil {
+		return err
+	}
+
+	res, err := h.client.Cluster.PutSettings(
+		bytes.NewReader(data),
+		h.client.Cluster.PutSettings.WithPretty(),
+	)
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return errors.Errorf("Error when set Elasticsearch cluster setting: %s", res.String())
+	}
+
+	return nil
+}
+
+// EnableRoutingAllocation permit to enable cluster routing allocation
+// It put `cluster.routing.allocation.enable` to all
+func (h *ElasticsearchHandlerImpl) EnableRoutingAllocation() (err error) {
+	settings := map[string]interface{}{
+		"persistent": map[string]interface{}{
+			"cluster.routing.allocation.enable": "all",
+		},
+	}
+
+	data, err := json.Marshal(settings)
+	if err != nil {
+		return err
+	}
+
+	res, err := h.client.Cluster.PutSettings(
+		bytes.NewReader(data),
+		h.client.Cluster.PutSettings.WithPretty(),
+	)
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return errors.Errorf("Error when set Elasticsearch cluster setting: %s", res.String())
+	}
+
+	return nil
+}
+
+// DisableRoutingAllocation permit to disable cluster routing allocation
+// It put `cluster.routing.allocation.enable` to primaries
+func (h *ElasticsearchHandlerImpl) DisableRoutingAllocation() (err error) {
+	settings := map[string]interface{}{
+		"persistent": map[string]interface{}{
+			"cluster.routing.allocation.enable": "primaries",
+		},
+	}
+
+	data, err := json.Marshal(settings)
+	if err != nil {
+		return err
+	}
+
+	res, err := h.client.Cluster.PutSettings(
+		bytes.NewReader(data),
+		h.client.Cluster.PutSettings.WithPretty(),
+	)
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return errors.Errorf("Error when set Elasticsearch cluster setting: %s", res.String())
+	}
+
+	return nil
 }

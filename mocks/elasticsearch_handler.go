@@ -129,6 +129,62 @@ func (mr *MockElasticsearchHandlerMockRecorder) ComponentTemplateUpdate(arg0, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ComponentTemplateUpdate", reflect.TypeOf((*MockElasticsearchHandler)(nil).ComponentTemplateUpdate), arg0, arg1)
 }
 
+// DisableRoutingAllocation mocks base method.
+func (m *MockElasticsearchHandler) DisableRoutingAllocation() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DisableRoutingAllocation")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DisableRoutingAllocation indicates an expected call of DisableRoutingAllocation.
+func (mr *MockElasticsearchHandlerMockRecorder) DisableRoutingAllocation() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisableRoutingAllocation", reflect.TypeOf((*MockElasticsearchHandler)(nil).DisableRoutingAllocation))
+}
+
+// DisableRoutingRebalance mocks base method.
+func (m *MockElasticsearchHandler) DisableRoutingRebalance() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DisableRoutingRebalance")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DisableRoutingRebalance indicates an expected call of DisableRoutingRebalance.
+func (mr *MockElasticsearchHandlerMockRecorder) DisableRoutingRebalance() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisableRoutingRebalance", reflect.TypeOf((*MockElasticsearchHandler)(nil).DisableRoutingRebalance))
+}
+
+// EnableRoutingAllocation mocks base method.
+func (m *MockElasticsearchHandler) EnableRoutingAllocation() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnableRoutingAllocation")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EnableRoutingAllocation indicates an expected call of EnableRoutingAllocation.
+func (mr *MockElasticsearchHandlerMockRecorder) EnableRoutingAllocation() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableRoutingAllocation", reflect.TypeOf((*MockElasticsearchHandler)(nil).EnableRoutingAllocation))
+}
+
+// EnableRoutingRebalance mocks base method.
+func (m *MockElasticsearchHandler) EnableRoutingRebalance() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnableRoutingRebalance")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EnableRoutingRebalance indicates an expected call of EnableRoutingRebalance.
+func (mr *MockElasticsearchHandlerMockRecorder) EnableRoutingRebalance() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableRoutingRebalance", reflect.TypeOf((*MockElasticsearchHandler)(nil).EnableRoutingRebalance))
+}
+
 // ILMDelete mocks base method.
 func (m *MockElasticsearchHandler) ILMDelete(arg0 string) error {
 	m.ctrl.T.Helper()

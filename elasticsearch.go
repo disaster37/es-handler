@@ -86,6 +86,10 @@ type ElasticsearchHandler interface {
 
 	// Cluster scope
 	ClusterHealth() (health *olivere.ClusterHealthResponse, err error)
+	EnableRoutingRebalance() (err error)
+	DisableRoutingRebalance() (err error)
+	EnableRoutingAllocation() (err error)
+	DisableRoutingAllocation() (err error)
 
 	SetLogger(log *logrus.Entry)
 }
