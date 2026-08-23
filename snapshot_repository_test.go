@@ -3,10 +3,12 @@ package eshandler
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
+	elasticsearch "github.com/disaster37/elasticsearch/v9"
+	esapi "github.com/disaster37/elasticsearch/v9/api"
 	"github.com/jarcoal/httpmock"
-	olivere "github.com/olivere/elastic/v7"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,10 +16,10 @@ var urlSnapshotRepository = fmt.Sprintf("%s/_snapshot/test", baseURL)
 
 func (t *ElasticsearchHandlerTestSuite) TestSnapshotRespositoryGet() {
 
-	snapshotRepository := make(olivere.SnapshotGetRepositoryResponse)
-	snapshotRepository["test"] = &olivere.SnapshotRepositoryMetaData{
+	snapshotRepository := make(map[string]*esapi.SnapshotRepository)
+	snapshotRepository["test"] = &esapi.SnapshotRepository{
 		Type: "fs",
-		Settings: map[string]interface{}{
+		Settings: map[string]string{
 			"location": "/snapshot",
 		},
 	}
@@ -37,6 +39,12 @@ func (t *ElasticsearchHandlerTestSuite) TestSnapshotRespositoryGet() {
 	}
 	assert.Equal(t.T(), snapshotRepository["test"], repo)
 
+	// When not found
+	httpmock.RegisterResponder("GET", urlSnapshotRepository, httpmock.NewStringResponder(404, `{"error":{"type":"repository_missing_exception","reason":"not found"},"status":404}`))
+	repo, err = t.esHandler.SnapshotRepositoryGet("test")
+	assert.NoError(t.T(), err)
+	assert.Nil(t.T(), repo)
+
 	// When error
 	httpmock.RegisterResponder("GET", urlSnapshotRepository, httpmock.NewErrorResponder(errors.New("fack error")))
 	_, err = t.esHandler.SnapshotRepositoryGet("test")
@@ -46,7 +54,7 @@ func (t *ElasticsearchHandlerTestSuite) TestSnapshotRespositoryGet() {
 func (t *ElasticsearchHandlerTestSuite) TestSnapshotRepositoryDelete() {
 
 	httpmock.RegisterResponder("DELETE", urlSnapshotRepository, func(req *http.Request) (*http.Response, error) {
-		resp := httpmock.NewStringResponse(200, "")
+		resp := httpmock.NewStringResponse(200, "{}")
 		SetHeaders(resp)
 		return resp, nil
 	})
@@ -56,6 +64,11 @@ func (t *ElasticsearchHandlerTestSuite) TestSnapshotRepositoryDelete() {
 		t.Fail(err.Error())
 	}
 
+	// When not found
+	httpmock.RegisterResponder("DELETE", urlSnapshotRepository, httpmock.NewStringResponder(404, `{"error":{"type":"repository_missing_exception","reason":"not found"},"status":404}`))
+	err = t.esHandler.SnapshotRepositoryDelete("test")
+	assert.NoError(t.T(), err)
+
 	// When error
 	httpmock.RegisterResponder("DELETE", urlSnapshotRepository, httpmock.NewErrorResponder(errors.New("fack error")))
 	err = t.esHandler.SnapshotRepositoryDelete("test")
@@ -64,15 +77,17 @@ func (t *ElasticsearchHandlerTestSuite) TestSnapshotRepositoryDelete() {
 
 func (t *ElasticsearchHandlerTestSuite) TestSnapshotRepositoryUpdate() {
 
-	snapshotRepository := &olivere.SnapshotRepositoryMetaData{
+	snapshotRepository := &esapi.SnapshotRepository{
 		Type: "fs",
-		Settings: map[string]interface{}{
+		Settings: map[string]string{
 			"location": "/snapshot",
 		},
 	}
 
 	httpmock.RegisterResponder("PUT", urlSnapshotRepository, func(req *http.Request) (*http.Response, error) {
-		resp := httpmock.NewStringResponse(200, "")
+		b, _ := io.ReadAll(req.Body)
+		assert.JSONEq(t.T(), `{"type":"fs","settings":{"location":"/snapshot"}}`, string(b))
+		resp := httpmock.NewStringResponse(200, "{}")
 		SetHeaders(resp)
 		return resp, nil
 	})
@@ -82,6 +97,16 @@ func (t *ElasticsearchHandlerTestSuite) TestSnapshotRepositoryUpdate() {
 		t.Fail(err.Error())
 	}
 
+	// When empty name
+	err = t.esHandler.SnapshotRepositoryUpdate("", snapshotRepository)
+	assert.Error(t.T(), err)
+
+	// When conflict
+	httpmock.RegisterResponder("PUT", urlSnapshotRepository, httpmock.NewStringResponder(409, `{"error":{"type":"version_conflict_engine_exception","reason":"conflict"},"status":409}`))
+	err = t.esHandler.SnapshotRepositoryUpdate("test", snapshotRepository)
+	assert.Error(t.T(), err)
+	assert.True(t.T(), elasticsearch.IsConflict(err))
+
 	// When error
 	httpmock.RegisterResponder("PUT", urlSnapshotRepository, httpmock.NewErrorResponder(errors.New("fack error")))
 	err = t.esHandler.SnapshotRepositoryUpdate("test", snapshotRepository)
@@ -89,11 +114,11 @@ func (t *ElasticsearchHandlerTestSuite) TestSnapshotRepositoryUpdate() {
 }
 
 func (t *ElasticsearchHandlerTestSuite) TestSnapshotRepositoryDiff() {
-	var actual, expected, original *olivere.SnapshotRepositoryMetaData
+	var actual, expected, original *esapi.SnapshotRepository
 
-	expected = &olivere.SnapshotRepositoryMetaData{
+	expected = &esapi.SnapshotRepository{
 		Type: "fs",
-		Settings: map[string]interface{}{
+		Settings: map[string]string{
 			"location": "/snapshot",
 		},
 	}
@@ -108,9 +133,9 @@ func (t *ElasticsearchHandlerTestSuite) TestSnapshotRepositoryDiff() {
 	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When policy is the same
-	actual = &olivere.SnapshotRepositoryMetaData{
+	actual = &esapi.SnapshotRepository{
 		Type: "fs",
-		Settings: map[string]interface{}{
+		Settings: map[string]string{
 			"location": "/snapshot",
 		},
 	}
@@ -131,22 +156,22 @@ func (t *ElasticsearchHandlerTestSuite) TestSnapshotRepositoryDiff() {
 	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When elastic set default values
-	actual = &olivere.SnapshotRepositoryMetaData{
+	actual = &esapi.SnapshotRepository{
 		Type: "fs",
-		Settings: map[string]interface{}{
+		Settings: map[string]string{
 			"location": "/snapshot",
-			"default": "plop",
+			"default":  "plop",
 		},
 	}
-	expected = &olivere.SnapshotRepositoryMetaData{
+	expected = &esapi.SnapshotRepository{
 		Type: "fs",
-		Settings: map[string]interface{}{
+		Settings: map[string]string{
 			"location": "/snapshot",
 		},
 	}
-	original = &olivere.SnapshotRepositoryMetaData{
+	original = &esapi.SnapshotRepository{
 		Type: "fs",
-		Settings: map[string]interface{}{
+		Settings: map[string]string{
 			"location": "/snapshot",
 		},
 	}

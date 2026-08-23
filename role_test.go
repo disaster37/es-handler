@@ -3,6 +3,7 @@ package eshandler
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/jarcoal/httpmock"
@@ -40,6 +41,12 @@ func (t *ElasticsearchHandlerTestSuite) TestRoleGet() {
 	}
 	assert.Equal(t.T(), role, resp)
 
+	// When not found
+	httpmock.RegisterResponder("GET", urlRole, httpmock.NewStringResponder(404, `{"error":{"type":"resource_not_found_exception","reason":"not found"},"status":404}`))
+	resp, err = t.esHandler.RoleGet("test")
+	assert.NoError(t.T(), err)
+	assert.Nil(t.T(), resp)
+
 	// When error
 	httpmock.RegisterResponder("GET", urlRole, httpmock.NewErrorResponder(errors.New("fack error")))
 	_, err = t.esHandler.RoleGet("test")
@@ -49,7 +56,7 @@ func (t *ElasticsearchHandlerTestSuite) TestRoleGet() {
 func (t *ElasticsearchHandlerTestSuite) TestRoleDelete() {
 
 	httpmock.RegisterResponder("DELETE", urlRole, func(req *http.Request) (*http.Response, error) {
-		resp := httpmock.NewStringResponse(200, "")
+		resp := httpmock.NewStringResponse(200, "{}")
 		SetHeaders(resp)
 		return resp, nil
 	})
@@ -58,6 +65,15 @@ func (t *ElasticsearchHandlerTestSuite) TestRoleDelete() {
 	if err != nil {
 		t.Fail(err.Error())
 	}
+
+	// When not found
+	httpmock.RegisterResponder("DELETE", urlRole, httpmock.NewStringResponder(404, `{"error":{"type":"resource_not_found_exception","reason":"not found"},"status":404}`))
+	err = t.esHandler.RoleDelete("test")
+	assert.NoError(t.T(), err)
+
+	// When empty name
+	err = t.esHandler.RoleDelete("")
+	assert.Error(t.T(), err)
 
 	// When error
 	httpmock.RegisterResponder("DELETE", urlRole, httpmock.NewErrorResponder(errors.New("fack error")))
@@ -77,7 +93,9 @@ func (t *ElasticsearchHandlerTestSuite) TestRoleUpdate() {
 	}
 
 	httpmock.RegisterResponder("PUT", urlRole, func(req *http.Request) (*http.Response, error) {
-		resp := httpmock.NewStringResponse(200, "")
+		b, _ := io.ReadAll(req.Body)
+		assert.JSONEq(t.T(), `{"cluster":["all"],"indices":[{"names":["logstash-*"],"privileges":["read"]}]}`, string(b))
+		resp := httpmock.NewStringResponse(200, "{}")
 		SetHeaders(resp)
 		return resp, nil
 	})
@@ -86,6 +104,10 @@ func (t *ElasticsearchHandlerTestSuite) TestRoleUpdate() {
 	if err != nil {
 		t.Fail(err.Error())
 	}
+
+	// When empty name
+	err = t.esHandler.RoleUpdate("", role)
+	assert.Error(t.T(), err)
 
 	// When error
 	httpmock.RegisterResponder("PUT", urlRole, httpmock.NewErrorResponder(errors.New("fack error")))

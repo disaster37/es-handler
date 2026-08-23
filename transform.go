@@ -1,14 +1,11 @@
 package eshandler
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"io"
+	"net/url"
 
 	"github.com/disaster37/generic-objectmatcher/patch"
-	jsonIterator "github.com/json-iterator/go"
-	"github.com/pkg/errors"
 )
 
 type TransformGetResponse struct {
@@ -72,82 +69,23 @@ type TransformPivot struct {
 
 // TransformUpdate permit to create or update transform
 func (h *ElasticsearchHandlerImpl) TransformUpdate(name string, transform *Transform) (err error) {
-
-	data, err := json.Marshal(transform)
-	if err != nil {
-		return err
-	}
-
-	res, err := h.client.API.TransformPutTransform(
-		bytes.NewReader(data),
-		name,
-		h.client.API.TransformPutTransform.WithContext(context.Background()),
-		h.client.API.TransformPutTransform.WithPretty(),
-	)
-
-	if err != nil {
-		return err
-	}
-
-	defer res.Body.Close()
-
-	if res.IsError() {
-		return errors.Errorf("Error when add transform %s: %s", name, res.String())
-	}
-
-	return nil
-
+	_, err = h.client.Transform().Put(context.Background(), name, transform, nil)
+	return err
 }
 
 // TransformDelete permit to delete transform
 func (h *ElasticsearchHandlerImpl) TransformDelete(name string) (err error) {
-
-	res, err := h.client.API.TransformDeleteTransform(
-		name,
-		h.client.API.TransformDeleteTransform.WithContext(context.Background()),
-		h.client.API.TransformDeleteTransform.WithPretty(),
-	)
-
-	if err != nil {
-		return err
-	}
-
-	defer res.Body.Close()
-
-	if res.IsError() {
-		if res.StatusCode == 404 {
-			return nil
-		}
-		return errors.Errorf("Error when delete transform %s: %s", name, res.String())
-
-	}
-
-	return nil
+	_, err = h.client.Transform().Delete(context.Background(), name, nil)
+	return ignoreNotFound(err)
 }
 
 // TransformGet permit to get transform
 func (h *ElasticsearchHandlerImpl) TransformGet(name string) (transform *Transform, err error) {
-
-	res, err := h.client.API.TransformGetTransform(
-		h.client.API.TransformGetTransform.WithTransformID(name),
-		h.client.API.TransformGetTransform.WithContext(context.Background()),
-		h.client.API.TransformGetTransform.WithPretty(),
-	)
-	if err != nil {
+	b, err := h.getRaw("/_transform/" + url.PathEscape(name))
+	if err != nil || b == nil {
 		return nil, err
 	}
-	defer res.Body.Close()
-	if res.IsError() {
-		if res.StatusCode == 404 {
-			return nil, nil
-		}
-		return nil, errors.Errorf("Error when get transform %s: %s", name, res.String())
 
-	}
-	b, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
 	transforms := &TransformGetResponse{}
 	if err := json.Unmarshal(b, transforms); err != nil {
 		return nil, err
@@ -162,21 +100,5 @@ func (h *ElasticsearchHandlerImpl) TransformGet(name string) (transform *Transfo
 
 // TransformDiff permit to check if 2 transform are the same
 func (h *ElasticsearchHandlerImpl) TransformDiff(actualObject, expectedObject, originalObject *Transform) (patchResult *patch.PatchResult, err error) {
-	// If not yet exist
-	if actualObject == nil {
-		expected, err := jsonIterator.ConfigCompatibleWithStandardLibrary.Marshal(expectedObject)
-		if err != nil {
-			return nil, errors.Wrap(err, "Failed to convert expected object to byte sequence")
-		}
-
-		return &patch.PatchResult{
-			Patch:    expected,
-			Current:  expected,
-			Modified: expected,
-			Original: nil,
-			Patched:  expectedObject,
-		}, nil
-	}
-
-	return patch.DefaultPatchMaker.Calculate(actualObject, expectedObject, originalObject)
+	return computeDiff(actualObject, expectedObject, originalObject)
 }

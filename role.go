@@ -1,13 +1,12 @@
 package eshandler
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"io"
+	"net/url"
 
+	elasticsearch "github.com/disaster37/elasticsearch/v9"
 	"github.com/disaster37/generic-objectmatcher/patch"
-	jsonIterator "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 )
 
@@ -40,27 +39,9 @@ type XPackSecurityIndicesPermissions struct {
 
 // RoleUpdate permit to update role
 func (h *ElasticsearchHandlerImpl) RoleUpdate(name string, role *XPackSecurityRole) (err error) {
-
-	data, err := json.Marshal(role)
+	_, err = h.client.Security().PutRole(context.Background(), name, role)
 	if err != nil {
-		return err
-	}
-
-	res, err := h.client.API.Security.PutRole(
-		name,
-		bytes.NewReader(data),
-		h.client.API.Security.PutRole.WithContext(context.Background()),
-		h.client.API.Security.PutRole.WithPretty(),
-	)
-
-	if err != nil {
-		return err
-	}
-
-	defer res.Body.Close()
-
-	if res.IsError() {
-		return errors.Errorf("Error when add role %s: %s\ndata: %s", name, res.String(), string(data))
+		return errors.Wrapf(err, "Error when add role %s", name)
 	}
 
 	return nil
@@ -68,25 +49,12 @@ func (h *ElasticsearchHandlerImpl) RoleUpdate(name string, role *XPackSecurityRo
 
 // RoleDelete permit to delete role
 func (h *ElasticsearchHandlerImpl) RoleDelete(name string) (err error) {
-
-	res, err := h.client.API.Security.DeleteRole(
-		name,
-		h.client.API.Security.DeleteRole.WithContext(context.Background()),
-		h.client.API.Security.DeleteRole.WithPretty(),
-	)
-
+	_, err = h.client.Security().DeleteRole(context.Background(), name)
 	if err != nil {
-		return err
-	}
-
-	defer res.Body.Close()
-
-	if res.IsError() {
-		if res.StatusCode == 404 {
+		if elasticsearch.IsNotFound(err) {
 			return nil
-
 		}
-		return errors.Errorf("Error when delete role %s: %s", name, res.String())
+		return err
 	}
 
 	h.log.Infof("Deleted role %s successfully", name)
@@ -96,32 +64,14 @@ func (h *ElasticsearchHandlerImpl) RoleDelete(name string) (err error) {
 
 // RoleGet permit to get role
 func (h *ElasticsearchHandlerImpl) RoleGet(name string) (role *XPackSecurityRole, err error) {
-
-	res, err := h.client.API.Security.GetRole(
-		h.client.API.Security.GetRole.WithContext(context.Background()),
-		h.client.API.Security.GetRole.WithPretty(),
-		h.client.API.Security.GetRole.WithName(name),
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	if res.IsError() {
-		if res.StatusCode == 404 {
-			return nil, nil
-		}
-		return nil, errors.Errorf("Error when get role %s: %s", name, res.String())
-
-	}
-	b, err := io.ReadAll(res.Body)
-	if err != nil {
+	b, err := h.getRaw("/_security/role/" + url.PathEscape(name))
+	if err != nil || b == nil {
 		return nil, err
 	}
 
 	h.log.Debugf("Get role %s successfully:\n%s", name, string(b))
 	roleResp := make(map[string]XPackSecurityRole)
-	err = json.Unmarshal(b, &roleResp)
-	if err != nil {
+	if err = json.Unmarshal(b, &roleResp); err != nil {
 		return nil, err
 	}
 
@@ -132,21 +82,5 @@ func (h *ElasticsearchHandlerImpl) RoleGet(name string) (role *XPackSecurityRole
 
 // RoleDiff permit to check if 2 role are the same
 func (h *ElasticsearchHandlerImpl) RoleDiff(actualObject, expectedObject, originalObject *XPackSecurityRole) (patchResult *patch.PatchResult, err error) {
-	// If not yet exist
-	if actualObject == nil {
-		expected, err := jsonIterator.ConfigCompatibleWithStandardLibrary.Marshal(expectedObject)
-		if err != nil {
-			return nil, errors.Wrap(err, "Failed to convert expected object to byte sequence")
-		}
-
-		return &patch.PatchResult{
-			Patch:    expected,
-			Current:  expected,
-			Modified: expected,
-			Original: nil,
-			Patched:  expectedObject,
-		}, nil
-	}
-
-	return patch.DefaultPatchMaker.Calculate(actualObject, expectedObject, originalObject)
+	return computeDiff(actualObject, expectedObject, originalObject)
 }

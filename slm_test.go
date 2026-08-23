@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	elasticsearch "github.com/disaster37/elasticsearch/v9"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 )
@@ -49,6 +50,12 @@ func (t *ElasticsearchHandlerTestSuite) TestSLMGet() {
 	}
 	assert.Equal(t.T(), result["test"].Policy, policy)
 
+	// When not found
+	httpmock.RegisterResponder("GET", urlSLM, httpmock.NewStringResponder(404, `{"error":{"type":"resource_not_found_exception","reason":"not found"},"status":404}`))
+	policy, err = t.esHandler.SLMGet("test")
+	assert.NoError(t.T(), err)
+	assert.Nil(t.T(), policy)
+
 	// When error
 	httpmock.RegisterResponder("GET", urlSLM, httpmock.NewErrorResponder(errors.New("fack error")))
 	_, err = t.esHandler.SLMGet("test")
@@ -58,7 +65,7 @@ func (t *ElasticsearchHandlerTestSuite) TestSLMGet() {
 func (t *ElasticsearchHandlerTestSuite) TestSLMDelete() {
 
 	httpmock.RegisterResponder("DELETE", urlSLM, func(req *http.Request) (*http.Response, error) {
-		resp := httpmock.NewStringResponse(200, "")
+		resp := httpmock.NewStringResponse(200, "{}")
 		SetHeaders(resp)
 		return resp, nil
 	})
@@ -67,6 +74,15 @@ func (t *ElasticsearchHandlerTestSuite) TestSLMDelete() {
 	if err != nil {
 		t.Fail(err.Error())
 	}
+
+	// When not found
+	httpmock.RegisterResponder("DELETE", urlSLM, httpmock.NewStringResponder(404, `{"error":{"type":"resource_not_found_exception","reason":"not found"},"status":404}`))
+	err = t.esHandler.SLMDelete("test")
+	assert.NoError(t.T(), err)
+
+	// When empty name
+	err = t.esHandler.SLMDelete("")
+	assert.Error(t.T(), err)
 
 	// When error
 	httpmock.RegisterResponder("DELETE", urlSLM, httpmock.NewErrorResponder(errors.New("fack error")))
@@ -93,7 +109,7 @@ func (t *ElasticsearchHandlerTestSuite) TestSLMUpdate() {
 	}
 
 	httpmock.RegisterResponder("PUT", urlSLM, func(req *http.Request) (*http.Response, error) {
-		resp := httpmock.NewStringResponse(200, "")
+		resp := httpmock.NewStringResponse(200, "{}")
 		SetHeaders(resp)
 		return resp, nil
 	})
@@ -102,6 +118,16 @@ func (t *ElasticsearchHandlerTestSuite) TestSLMUpdate() {
 	if err != nil {
 		t.Fail(err.Error())
 	}
+
+	// When empty name
+	err = t.esHandler.SLMUpdate("", policy)
+	assert.Error(t.T(), err)
+
+	// When conflict
+	httpmock.RegisterResponder("PUT", urlSLM, httpmock.NewStringResponder(409, `{"error":{"type":"version_conflict_engine_exception","reason":"conflict"},"status":409}`))
+	err = t.esHandler.SLMUpdate("test", policy)
+	assert.Error(t.T(), err)
+	assert.True(t.T(), elasticsearch.IsConflict(err))
 
 	// When error
 	httpmock.RegisterResponder("PUT", urlSLM, httpmock.NewErrorResponder(errors.New("fack error")))

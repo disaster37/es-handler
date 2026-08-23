@@ -3,10 +3,12 @@ package eshandler
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
+	elasticsearch "github.com/disaster37/elasticsearch/v9"
+	esapi "github.com/disaster37/elasticsearch/v9/api"
 	"github.com/jarcoal/httpmock"
-	olivere "github.com/olivere/elastic/v7"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,15 +16,15 @@ var urlUser = fmt.Sprintf("%s/_security/user/test", baseURL)
 
 func (t *ElasticsearchHandlerTestSuite) TestUserGet() {
 
-	result := make(olivere.XPackSecurityGetUserResponse)
-	user := &olivere.XPackSecurityUser{
+	result := make(map[string]*esapi.SecurityUser)
+	user := &esapi.SecurityUser{
 		Username: "test",
 		Enabled:  true,
 		Email:    "no@no.no",
-		Fullname: "test",
+		FullName: "test",
 		Roles:    []string{"kibana_user"},
 	}
-	result["test"] = *user
+	result["test"] = user
 
 	httpmock.RegisterResponder("GET", urlUser, func(req *http.Request) (*http.Response, error) {
 		resp, err := httpmock.NewJsonResponse(200, result)
@@ -39,6 +41,18 @@ func (t *ElasticsearchHandlerTestSuite) TestUserGet() {
 	}
 	assert.Equal(t.T(), user, resp)
 
+	// When not found
+	httpmock.RegisterResponder("GET", urlUser, httpmock.NewStringResponder(404, `{"error":{"type":"resource_not_found_exception","reason":"not found"},"status":404}`))
+	resp, err = t.esHandler.UserGet("test")
+	assert.NoError(t.T(), err)
+	assert.Nil(t.T(), resp)
+
+	// When unauthorized
+	httpmock.RegisterResponder("GET", urlUser, httpmock.NewStringResponder(401, `{"error":{"type":"security_exception","reason":"unauthorized"},"status":401}`))
+	_, err = t.esHandler.UserGet("test")
+	assert.Error(t.T(), err)
+	assert.True(t.T(), elasticsearch.IsUnauthorized(err))
+
 	// When error
 	httpmock.RegisterResponder("GET", urlUser, httpmock.NewErrorResponder(errors.New("fack error")))
 	_, err = t.esHandler.UserGet("test")
@@ -48,7 +62,7 @@ func (t *ElasticsearchHandlerTestSuite) TestUserGet() {
 func (t *ElasticsearchHandlerTestSuite) TestUserDelete() {
 
 	httpmock.RegisterResponder("DELETE", urlUser, func(req *http.Request) (*http.Response, error) {
-		resp := httpmock.NewStringResponse(200, "")
+		resp := httpmock.NewStringResponse(200, "{}")
 		SetHeaders(resp)
 		return resp, nil
 	})
@@ -58,6 +72,15 @@ func (t *ElasticsearchHandlerTestSuite) TestUserDelete() {
 		t.Fail(err.Error())
 	}
 
+	// When not found
+	httpmock.RegisterResponder("DELETE", urlUser, httpmock.NewStringResponder(404, `{"error":{"type":"resource_not_found_exception","reason":"not found"},"status":404}`))
+	err = t.esHandler.UserDelete("test")
+	assert.NoError(t.T(), err)
+
+	// When empty name
+	err = t.esHandler.UserDelete("")
+	assert.Error(t.T(), err)
+
 	// When error
 	httpmock.RegisterResponder("DELETE", urlUser, httpmock.NewErrorResponder(errors.New("fack error")))
 	err = t.esHandler.UserDelete("test")
@@ -65,7 +88,7 @@ func (t *ElasticsearchHandlerTestSuite) TestUserDelete() {
 }
 
 func (t *ElasticsearchHandlerTestSuite) TestUserCreate() {
-	user := &olivere.XPackSecurityPutUserRequest{
+	user := &SecurityPutUserRequest{
 		Enabled:  true,
 		Email:    "no@no.no",
 		Roles:    []string{"kibana_user"},
@@ -74,7 +97,9 @@ func (t *ElasticsearchHandlerTestSuite) TestUserCreate() {
 	}
 
 	httpmock.RegisterResponder("PUT", urlUser, func(req *http.Request) (*http.Response, error) {
-		resp := httpmock.NewStringResponse(200, "")
+		b, _ := io.ReadAll(req.Body)
+		assert.JSONEq(t.T(), `{"enabled":true,"email":"no@no.no","full_name":"test","password":"password","roles":["kibana_user"]}`, string(b))
+		resp := httpmock.NewStringResponse(200, "{}")
 		SetHeaders(resp)
 		return resp, nil
 	})
@@ -83,6 +108,16 @@ func (t *ElasticsearchHandlerTestSuite) TestUserCreate() {
 	if err != nil {
 		t.Fail(err.Error())
 	}
+
+	// When empty name
+	err = t.esHandler.UserCreate("", user)
+	assert.Error(t.T(), err)
+
+	// When conflict
+	httpmock.RegisterResponder("PUT", urlUser, httpmock.NewStringResponder(409, `{"error":{"type":"version_conflict_engine_exception","reason":"conflict"},"status":409}`))
+	err = t.esHandler.UserCreate("test", user)
+	assert.Error(t.T(), err)
+	assert.True(t.T(), elasticsearch.IsConflict(err))
 
 	// When error
 	httpmock.RegisterResponder("PUT", urlUser, httpmock.NewErrorResponder(errors.New("fack error")))
@@ -93,7 +128,7 @@ func (t *ElasticsearchHandlerTestSuite) TestUserCreate() {
 func (t *ElasticsearchHandlerTestSuite) TestUserUpdate() {
 
 	// When no should to change password
-	user := &olivere.XPackSecurityPutUserRequest{
+	user := &SecurityPutUserRequest{
 		Enabled:  true,
 		Email:    "no@no.no",
 		Roles:    []string{"kibana_user"},
@@ -101,7 +136,7 @@ func (t *ElasticsearchHandlerTestSuite) TestUserUpdate() {
 	}
 
 	httpmock.RegisterResponder("PUT", urlUser, func(req *http.Request) (*http.Response, error) {
-		resp := httpmock.NewStringResponse(200, "")
+		resp := httpmock.NewStringResponse(200, "{}")
 		SetHeaders(resp)
 		return resp, nil
 	})
@@ -112,7 +147,7 @@ func (t *ElasticsearchHandlerTestSuite) TestUserUpdate() {
 	}
 
 	// When should to change password
-	user = &olivere.XPackSecurityPutUserRequest{
+	user = &SecurityPutUserRequest{
 		Enabled:  true,
 		Email:    "no@no.no",
 		Roles:    []string{"kibana_user"},
@@ -121,12 +156,12 @@ func (t *ElasticsearchHandlerTestSuite) TestUserUpdate() {
 	}
 
 	httpmock.RegisterResponder("PUT", urlUser, func(req *http.Request) (*http.Response, error) {
-		resp := httpmock.NewStringResponse(200, "")
+		resp := httpmock.NewStringResponse(200, "{}")
 		SetHeaders(resp)
 		return resp, nil
 	})
-	httpmock.RegisterResponder("PUT", fmt.Sprintf("%s/_password", urlUser), func(req *http.Request) (*http.Response, error) {
-		resp := httpmock.NewStringResponse(200, "")
+	httpmock.RegisterResponder("POST", fmt.Sprintf("%s/_password", urlUser), func(req *http.Request) (*http.Response, error) {
+		resp := httpmock.NewStringResponse(200, "{}")
 		SetHeaders(resp)
 		return resp, nil
 	})
@@ -143,9 +178,9 @@ func (t *ElasticsearchHandlerTestSuite) TestUserUpdate() {
 }
 
 func (t *ElasticsearchHandlerTestSuite) TestUserDiff() {
-	var actual, expected, original *olivere.XPackSecurityPutUserRequest
+	var actual, expected, original *SecurityPutUserRequest
 
-	expected = &olivere.XPackSecurityPutUserRequest{
+	expected = &SecurityPutUserRequest{
 		Enabled:  true,
 		Email:    "no@no.no",
 		Roles:    []string{"kibana_user"},
@@ -163,7 +198,7 @@ func (t *ElasticsearchHandlerTestSuite) TestUserDiff() {
 	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When user is the same
-	actual = &olivere.XPackSecurityPutUserRequest{
+	actual = &SecurityPutUserRequest{
 		Enabled:  true,
 		Email:    "no@no.no",
 		Roles:    []string{"kibana_user"},
@@ -187,7 +222,7 @@ func (t *ElasticsearchHandlerTestSuite) TestUserDiff() {
 	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When Elastic add default value
-	actual = &olivere.XPackSecurityPutUserRequest{
+	actual = &SecurityPutUserRequest{
 		Enabled:  true,
 		Email:    "no@no.no",
 		Roles:    []string{"kibana_user"},
@@ -198,7 +233,7 @@ func (t *ElasticsearchHandlerTestSuite) TestUserDiff() {
 		},
 	}
 
-	expected = &olivere.XPackSecurityPutUserRequest{
+	expected = &SecurityPutUserRequest{
 		Enabled:  true,
 		Email:    "no@no.no",
 		Roles:    []string{"kibana_user"},
@@ -206,7 +241,7 @@ func (t *ElasticsearchHandlerTestSuite) TestUserDiff() {
 		Password: "password",
 	}
 
-	original = &olivere.XPackSecurityPutUserRequest{
+	original = &SecurityPutUserRequest{
 		Enabled:  true,
 		Email:    "no@no.no",
 		Roles:    []string{"kibana_user"},

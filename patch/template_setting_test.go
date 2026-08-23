@@ -4,41 +4,36 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/olivere/elastic/v7"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestConvertComponentTemplateSetting(t *testing.T) {
 
-	actual := &IndicesGetComponentTemplate{
-		IndicesGetComponentTemplate: elastic.IndicesGetComponentTemplate{
-			Template: &elastic.IndicesGetComponentTemplateData{
-				Settings: map[string]any{
-					"test": "plop",
-					"property": map[string]any{
-						"plop": 100,
-					},
-					"list": []any{
-						200,
-						300,
-					},
+	actual := &ComponentTemplate{
+		Template: &ComponentTemplateData{
+			Settings: map[string]any{
+				"test": "plop",
+				"property": map[string]any{
+					"plop": 100,
+				},
+				"list": []any{
+					200,
+					300,
 				},
 			},
 		},
 	}
 
-	expected := &IndicesGetComponentTemplate{
-		IndicesGetComponentTemplate: elastic.IndicesGetComponentTemplate{
-			Template: &elastic.IndicesGetComponentTemplateData{
-				Settings: map[string]any{
-					"test": "plop",
-					"property": map[string]any{
-						"plop": "100",
-					},
-					"list": []any{
-						"200",
-						"300",
-					},
+	expected := &ComponentTemplate{
+		Template: &ComponentTemplateData{
+			Settings: map[string]any{
+				"test": "plop",
+				"property": map[string]any{
+					"plop": "100",
+				},
+				"list": []any{
+					"200",
+					"300",
 				},
 			},
 		},
@@ -62,35 +57,31 @@ func TestConvertComponentTemplateSetting(t *testing.T) {
 
 func TestConvertIndexTemplateSetting(t *testing.T) {
 
-	actual := &IndicesGetIndexTemplate{
-		IndicesGetIndexTemplate: elastic.IndicesGetIndexTemplate{
-			Template: &elastic.IndicesGetIndexTemplateData{
-				Settings: map[string]any{
-					"test": "plop",
-					"property": map[string]any{
-						"plop": 100,
-					},
-					"list": []any{
-						200,
-						300,
-					},
+	actual := &IndexTemplate{
+		Template: &IndexTemplateData{
+			Settings: map[string]any{
+				"test": "plop",
+				"property": map[string]any{
+					"plop": 100,
+				},
+				"list": []any{
+					200,
+					300,
 				},
 			},
 		},
 	}
 
-	expected := &IndicesGetIndexTemplate{
-		IndicesGetIndexTemplate: elastic.IndicesGetIndexTemplate{
-			Template: &elastic.IndicesGetIndexTemplateData{
-				Settings: map[string]any{
-					"test": "plop",
-					"property": map[string]any{
-						"plop": "100",
-					},
-					"list": []any{
-						"200",
-						"300",
-					},
+	expected := &IndexTemplate{
+		Template: &IndexTemplateData{
+			Settings: map[string]any{
+				"test": "plop",
+				"property": map[string]any{
+					"plop": "100",
+				},
+				"list": []any{
+					"200",
+					"300",
 				},
 			},
 		},

@@ -3,34 +3,52 @@ package eshandler
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
+	elasticsearch "github.com/disaster37/elasticsearch/v9"
+	localpatch "github.com/disaster37/es-handler/v9/patch"
 	"github.com/jarcoal/httpmock"
-	olivere "github.com/olivere/elastic/v7"
 	"github.com/stretchr/testify/assert"
 )
 
 var urlIndexTemplate = fmt.Sprintf("%s/_index_template/test", baseURL)
 
-func (t *ElasticsearchHandlerTestSuite) TestIndexTemplateGet() {
+const rawIndexTemplateResp = `{
+	"index_templates": [
+		{
+			"name": "test",
+			"index_template": {
+				"index_patterns": ["test-index-template"],
+				"priority": 2,
+				"template": {
+					"settings": {
+						"index.refresh_interval": "5s"
+					}
+				}
+			}
+		}
+	]
+}`
 
-	result := &olivere.IndicesGetIndexTemplateResponse{}
-	template := &olivere.IndicesGetIndexTemplate{
+func newTestIndexTemplate() *localpatch.IndexTemplate {
+	return &localpatch.IndexTemplate{
 		IndexPatterns: []string{"test-index-template"},
 		Priority:      2,
-		Template: &olivere.IndicesGetIndexTemplateData{
+		Template: &localpatch.IndexTemplateData{
 			Settings: map[string]any{
 				"index.refresh_interval": "5s",
 			},
 		},
 	}
-	result.IndexTemplates = olivere.IndicesGetIndexTemplatesSlice{olivere.IndicesGetIndexTemplates{IndexTemplate: template}}
+}
+
+func (t *ElasticsearchHandlerTestSuite) TestIndexTemplateGet() {
+
+	template := newTestIndexTemplate()
 
 	httpmock.RegisterResponder("GET", urlIndexTemplate, func(req *http.Request) (*http.Response, error) {
-		resp, err := httpmock.NewJsonResponse(200, result)
-		if err != nil {
-			panic(err)
-		}
+		resp := httpmock.NewStringResponse(200, rawIndexTemplateResp)
 		SetHeaders(resp)
 		return resp, nil
 	})
@@ -41,6 +59,12 @@ func (t *ElasticsearchHandlerTestSuite) TestIndexTemplateGet() {
 	}
 	assert.Equal(t.T(), template, resp)
 
+	// When not found
+	httpmock.RegisterResponder("GET", urlIndexTemplate, httpmock.NewStringResponder(404, `{"error":{"type":"resource_not_found_exception","reason":"not found"},"status":404}`))
+	resp, err = t.esHandler.IndexTemplateGet("test")
+	assert.NoError(t.T(), err)
+	assert.Nil(t.T(), resp)
+
 	// When error
 	httpmock.RegisterResponder("GET", urlIndexTemplate, httpmock.NewErrorResponder(errors.New("fack error")))
 	_, err = t.esHandler.IndexTemplateGet("test")
@@ -50,7 +74,7 @@ func (t *ElasticsearchHandlerTestSuite) TestIndexTemplateGet() {
 func (t *ElasticsearchHandlerTestSuite) TestIndexTemplateDelete() {
 
 	httpmock.RegisterResponder("DELETE", urlIndexTemplate, func(req *http.Request) (*http.Response, error) {
-		resp := httpmock.NewStringResponse(200, "")
+		resp := httpmock.NewStringResponse(200, "{}")
 		SetHeaders(resp)
 		return resp, nil
 	})
@@ -60,6 +84,15 @@ func (t *ElasticsearchHandlerTestSuite) TestIndexTemplateDelete() {
 		t.Fail(err.Error())
 	}
 
+	// When not found
+	httpmock.RegisterResponder("DELETE", urlIndexTemplate, httpmock.NewStringResponder(404, `{"error":{"type":"resource_not_found_exception","reason":"not found"},"status":404}`))
+	err = t.esHandler.IndexTemplateDelete("test")
+	assert.NoError(t.T(), err)
+
+	// When empty name
+	err = t.esHandler.IndexTemplateDelete("")
+	assert.Error(t.T(), err)
+
 	// When error
 	httpmock.RegisterResponder("DELETE", urlIndexTemplate, httpmock.NewErrorResponder(errors.New("fack error")))
 	err = t.esHandler.IndexTemplateDelete("test")
@@ -67,18 +100,12 @@ func (t *ElasticsearchHandlerTestSuite) TestIndexTemplateDelete() {
 }
 
 func (t *ElasticsearchHandlerTestSuite) TestIndexTemplateUpdate() {
-	template := &olivere.IndicesGetIndexTemplate{
-		IndexPatterns: []string{"test-index-template"},
-		Priority:      2,
-		Template: &olivere.IndicesGetIndexTemplateData{
-			Settings: map[string]any{
-				"index.refresh_interval": "5s",
-			},
-		},
-	}
+	template := newTestIndexTemplate()
 
 	httpmock.RegisterResponder("PUT", urlIndexTemplate, func(req *http.Request) (*http.Response, error) {
-		resp := httpmock.NewStringResponse(200, "")
+		b, _ := io.ReadAll(req.Body)
+		assert.JSONEq(t.T(), `{"index_patterns":["test-index-template"],"priority":2,"template":{"settings":{"index.refresh_interval":"5s"}}}`, string(b))
+		resp := httpmock.NewStringResponse(200, "{}")
 		SetHeaders(resp)
 		return resp, nil
 	})
@@ -88,6 +115,16 @@ func (t *ElasticsearchHandlerTestSuite) TestIndexTemplateUpdate() {
 		t.Fail(err.Error())
 	}
 
+	// When empty name
+	err = t.esHandler.IndexTemplateUpdate("", template)
+	assert.Error(t.T(), err)
+
+	// When conflict
+	httpmock.RegisterResponder("PUT", urlIndexTemplate, httpmock.NewStringResponder(409, `{"error":{"type":"version_conflict_engine_exception","reason":"conflict"},"status":409}`))
+	err = t.esHandler.IndexTemplateUpdate("test", template)
+	assert.Error(t.T(), err)
+	assert.True(t.T(), elasticsearch.IsConflict(err))
+
 	// When error
 	httpmock.RegisterResponder("PUT", urlIndexTemplate, httpmock.NewErrorResponder(errors.New("fack error")))
 	err = t.esHandler.IndexTemplateUpdate("test", template)
@@ -95,17 +132,9 @@ func (t *ElasticsearchHandlerTestSuite) TestIndexTemplateUpdate() {
 }
 
 func (t *ElasticsearchHandlerTestSuite) TestIndexTemplateDiff() {
-	var actual, expected, original *olivere.IndicesGetIndexTemplate
+	var actual, expected, original *localpatch.IndexTemplate
 
-	expected = &olivere.IndicesGetIndexTemplate{
-		IndexPatterns: []string{"test-index-template"},
-		Priority:      2,
-		Template: &olivere.IndicesGetIndexTemplateData{
-			Settings: map[string]any{
-				"index.refresh_interval": "5s",
-			},
-		},
-	}
+	expected = newTestIndexTemplate()
 
 	// When template not exist yet
 	actual = nil
@@ -117,15 +146,7 @@ func (t *ElasticsearchHandlerTestSuite) TestIndexTemplateDiff() {
 	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When template is the same
-	actual = &olivere.IndicesGetIndexTemplate{
-		IndexPatterns: []string{"test-index-template"},
-		Priority:      2,
-		Template: &olivere.IndicesGetIndexTemplateData{
-			Settings: map[string]any{
-				"index.refresh_interval": "5s",
-			},
-		},
-	}
+	actual = newTestIndexTemplate()
 	diff, err = t.esHandler.IndexTemplateDiff(actual, expected, actual)
 	if err != nil {
 		t.Fail(err.Error())
@@ -134,7 +155,7 @@ func (t *ElasticsearchHandlerTestSuite) TestIndexTemplateDiff() {
 	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When template is not the same
-	expected.Template = &olivere.IndicesGetIndexTemplateData{
+	expected.Template = &localpatch.IndexTemplateData{
 		Mappings: map[string]any{
 			"_source.enabled":           false,
 			"properties.host_name.type": "keyword",
@@ -148,10 +169,10 @@ func (t *ElasticsearchHandlerTestSuite) TestIndexTemplateDiff() {
 	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When Elastic add default value
-	actual = &olivere.IndicesGetIndexTemplate{
+	actual = &localpatch.IndexTemplate{
 		IndexPatterns: []string{"test-index-template"},
 		Priority:      2,
-		Template: &olivere.IndicesGetIndexTemplateData{
+		Template: &localpatch.IndexTemplateData{
 			Settings: map[string]any{
 				"index.refresh_interval": "5s",
 			},
@@ -161,25 +182,9 @@ func (t *ElasticsearchHandlerTestSuite) TestIndexTemplateDiff() {
 		},
 	}
 
-	expected = &olivere.IndicesGetIndexTemplate{
-		IndexPatterns: []string{"test-index-template"},
-		Priority:      2,
-		Template: &olivere.IndicesGetIndexTemplateData{
-			Settings: map[string]any{
-				"index.refresh_interval": "5s",
-			},
-		},
-	}
+	expected = newTestIndexTemplate()
 
-	original = &olivere.IndicesGetIndexTemplate{
-		IndexPatterns: []string{"test-index-template"},
-		Priority:      2,
-		Template: &olivere.IndicesGetIndexTemplateData{
-			Settings: map[string]any{
-				"index.refresh_interval": "5s",
-			},
-		},
-	}
+	original = newTestIndexTemplate()
 
 	diff, err = t.esHandler.IndexTemplateDiff(actual, expected, original)
 	if err != nil {

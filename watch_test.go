@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
+	elasticsearch "github.com/disaster37/elasticsearch/v9"
 	"github.com/google/go-cmp/cmp"
 	"github.com/jarcoal/httpmock"
-	olivere "github.com/olivere/elastic/v7"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -89,7 +90,7 @@ func (t *ElasticsearchHandlerTestSuite) TestWatchGet() {
 	  }
 	`
 
-	watchTest := &olivere.XPackWatch{}
+	watchTest := &XPackWatch{}
 	if err := json.Unmarshal([]byte(rawWatch), watchTest); err != nil {
 		panic(err)
 	}
@@ -106,6 +107,16 @@ func (t *ElasticsearchHandlerTestSuite) TestWatchGet() {
 	}
 	assert.Empty(t.T(), cmp.Diff(watchTest, watch))
 
+	// When not found
+	httpmock.RegisterResponder("GET", urlWatch, httpmock.NewStringResponder(404, `{"error":{"type":"resource_not_found_exception","reason":"not found"},"status":404}`))
+	watch, err = t.esHandler.WatchGet("test")
+	assert.NoError(t.T(), err)
+	assert.Nil(t.T(), watch)
+
+	// When empty name
+	_, err = t.esHandler.WatchGet("")
+	assert.Error(t.T(), err)
+
 	// When error
 	httpmock.RegisterResponder("GET", urlWatch, httpmock.NewErrorResponder(errors.New("fack error")))
 	_, err = t.esHandler.WatchGet("test")
@@ -115,7 +126,7 @@ func (t *ElasticsearchHandlerTestSuite) TestWatchGet() {
 func (t *ElasticsearchHandlerTestSuite) TestWatchDelete() {
 
 	httpmock.RegisterResponder("DELETE", urlWatch, func(req *http.Request) (*http.Response, error) {
-		resp := httpmock.NewStringResponse(200, "")
+		resp := httpmock.NewStringResponse(200, "{}")
 		SetHeaders(resp)
 		return resp, nil
 	})
@@ -124,6 +135,15 @@ func (t *ElasticsearchHandlerTestSuite) TestWatchDelete() {
 	if err != nil {
 		t.Fail(err.Error())
 	}
+
+	// When not found
+	httpmock.RegisterResponder("DELETE", urlWatch, httpmock.NewStringResponder(404, `{"error":{"type":"resource_not_found_exception","reason":"not found"},"status":404}`))
+	err = t.esHandler.WatchDelete("test")
+	assert.NoError(t.T(), err)
+
+	// When empty name
+	err = t.esHandler.WatchDelete("")
+	assert.Error(t.T(), err)
 
 	// When error
 	httpmock.RegisterResponder("DELETE", urlWatch, httpmock.NewErrorResponder(errors.New("fack error")))
@@ -180,13 +200,15 @@ func (t *ElasticsearchHandlerTestSuite) TestWatchUpdate() {
 	}
 	`
 
-	watchTest := &olivere.XPackWatch{}
+	watchTest := &XPackWatch{}
 	if err := json.Unmarshal([]byte(rawWatch), watchTest); err != nil {
 		panic(err)
 	}
 
 	httpmock.RegisterResponder("PUT", urlWatch, func(req *http.Request) (*http.Response, error) {
-		resp := httpmock.NewStringResponse(200, "")
+		b, _ := io.ReadAll(req.Body)
+		assert.JSONEq(t.T(), rawWatch, string(b))
+		resp := httpmock.NewStringResponse(200, "{}")
 		SetHeaders(resp)
 		return resp, nil
 	})
@@ -196,6 +218,16 @@ func (t *ElasticsearchHandlerTestSuite) TestWatchUpdate() {
 		t.Fail(err.Error())
 	}
 
+	// When empty name
+	err = t.esHandler.WatchUpdate("", watchTest)
+	assert.Error(t.T(), err)
+
+	// When conflict
+	httpmock.RegisterResponder("PUT", urlWatch, httpmock.NewStringResponder(409, `{"error":{"type":"version_conflict_engine_exception","reason":"conflict"},"status":409}`))
+	err = t.esHandler.WatchUpdate("test", watchTest)
+	assert.Error(t.T(), err)
+	assert.True(t.T(), elasticsearch.IsConflict(err))
+
 	// When error
 	httpmock.RegisterResponder("PUT", urlWatch, httpmock.NewErrorResponder(errors.New("fack error")))
 	err = t.esHandler.WatchUpdate("test", watchTest)
@@ -203,7 +235,7 @@ func (t *ElasticsearchHandlerTestSuite) TestWatchUpdate() {
 }
 
 func (t *ElasticsearchHandlerTestSuite) TestWatchDiff() {
-	var actual, expected, original *olivere.XPackWatch
+	var actual, expected, original *XPackWatch
 	rawWatch := `
 	{
 		"trigger" : {
@@ -251,7 +283,7 @@ func (t *ElasticsearchHandlerTestSuite) TestWatchDiff() {
 	}
 	`
 
-	expected = &olivere.XPackWatch{}
+	expected = &XPackWatch{}
 	if err := json.Unmarshal([]byte(rawWatch), expected); err != nil {
 		panic(err)
 	}
@@ -266,7 +298,7 @@ func (t *ElasticsearchHandlerTestSuite) TestWatchDiff() {
 	assert.Equal(t.T(), expected, diff.Patched)
 
 	// When watch is the same
-	actual = &olivere.XPackWatch{}
+	actual = &XPackWatch{}
 	if err := json.Unmarshal([]byte(rawWatch), &actual); err != nil {
 		panic(err)
 	}
@@ -324,7 +356,7 @@ func (t *ElasticsearchHandlerTestSuite) TestWatchDiff() {
 		}
 	}
 	`
-	expected = &olivere.XPackWatch{}
+	expected = &XPackWatch{}
 	if err := json.Unmarshal([]byte(rawWatch), expected); err != nil {
 		panic(err)
 	}
@@ -385,7 +417,7 @@ func (t *ElasticsearchHandlerTestSuite) TestWatchDiff() {
 		}
 	}
 	`
-	actual = &olivere.XPackWatch{}
+	actual = &XPackWatch{}
 	if err := json.Unmarshal([]byte(rawWatch), actual); err != nil {
 		panic(err)
 	}
@@ -436,11 +468,11 @@ func (t *ElasticsearchHandlerTestSuite) TestWatchDiff() {
 		}
 	}
 	`
-	expected = &olivere.XPackWatch{}
+	expected = &XPackWatch{}
 	if err := json.Unmarshal([]byte(rawWatch), expected); err != nil {
 		panic(err)
 	}
-	original = &olivere.XPackWatch{}
+	original = &XPackWatch{}
 	if err := json.Unmarshal([]byte(rawWatch), original); err != nil {
 		panic(err)
 	}

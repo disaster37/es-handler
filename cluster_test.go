@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
+	elasticsearch "github.com/disaster37/elasticsearch/v9"
+	esapi "github.com/disaster37/elasticsearch/v9/api"
 	"github.com/google/go-cmp/cmp"
 	"github.com/jarcoal/httpmock"
-	olivere "github.com/olivere/elastic/v7"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -36,7 +38,7 @@ func (t *ElasticsearchHandlerTestSuite) TestClusterHealth() {
 	}
 	`
 
-	healthTest := &olivere.ClusterHealthResponse{}
+	healthTest := &esapi.ClusterHealthResponse{}
 	if err := json.Unmarshal([]byte(rawHealth), healthTest); err != nil {
 		panic(err)
 	}
@@ -53,17 +55,31 @@ func (t *ElasticsearchHandlerTestSuite) TestClusterHealth() {
 	}
 	assert.Empty(t.T(), cmp.Diff(healthTest, health))
 
+	// When not found
+	httpmock.RegisterResponder("GET", fmt.Sprintf("%s/health", urlCluster), httpmock.NewStringResponder(404, `{"error":{"type":"index_not_found_exception","reason":"not found"},"status":404}`))
+	health, err = t.esHandler.ClusterHealth()
+	assert.Error(t.T(), err)
+	assert.True(t.T(), elasticsearch.IsNotFound(err))
+
+	// When unauthorized
+	httpmock.RegisterResponder("GET", fmt.Sprintf("%s/health", urlCluster), httpmock.NewStringResponder(401, `{"error":{"type":"security_exception","reason":"unauthorized"},"status":401}`))
+	health, err = t.esHandler.ClusterHealth()
+	assert.Error(t.T(), err)
+	assert.True(t.T(), elasticsearch.IsUnauthorized(err))
+
 	// When error
 	httpmock.RegisterResponder("GET", fmt.Sprintf("%s/health", urlCluster), httpmock.NewErrorResponder(errors.New("fack error")))
 	_, err = t.esHandler.ClusterHealth()
 	assert.Error(t.T(), err)
 }
 
-func (t *ElasticsearchHandlerTestSuite) EnableRoutingRebalance() {
+func (t *ElasticsearchHandlerTestSuite) TestEnableRoutingRebalance() {
 
 	urlSetting := fmt.Sprintf("%s/settings", urlCluster)
 
 	httpmock.RegisterResponder("PUT", urlSetting, func(req *http.Request) (*http.Response, error) {
+		b, _ := io.ReadAll(req.Body)
+		assert.JSONEq(t.T(), `{"persistent":{"cluster.routing.rebalance.enable":"all"}}`, string(b))
 		resp := httpmock.NewStringResponse(200, `{}`)
 		return resp, nil
 	})
@@ -79,11 +95,13 @@ func (t *ElasticsearchHandlerTestSuite) EnableRoutingRebalance() {
 	assert.Error(t.T(), err)
 }
 
-func (t *ElasticsearchHandlerTestSuite) DisableRoutingRebalance() {
+func (t *ElasticsearchHandlerTestSuite) TestDisableRoutingRebalance() {
 
 	urlSetting := fmt.Sprintf("%s/settings", urlCluster)
 
 	httpmock.RegisterResponder("PUT", urlSetting, func(req *http.Request) (*http.Response, error) {
+		b, _ := io.ReadAll(req.Body)
+		assert.JSONEq(t.T(), `{"persistent":{"cluster.routing.rebalance.enable":"none"}}`, string(b))
 		resp := httpmock.NewStringResponse(200, `{}`)
 		return resp, nil
 	})
@@ -99,11 +117,13 @@ func (t *ElasticsearchHandlerTestSuite) DisableRoutingRebalance() {
 	assert.Error(t.T(), err)
 }
 
-func (t *ElasticsearchHandlerTestSuite) EnableRoutingAllocation() {
+func (t *ElasticsearchHandlerTestSuite) TestEnableRoutingAllocation() {
 
 	urlSetting := fmt.Sprintf("%s/settings", urlCluster)
 
 	httpmock.RegisterResponder("PUT", urlSetting, func(req *http.Request) (*http.Response, error) {
+		b, _ := io.ReadAll(req.Body)
+		assert.JSONEq(t.T(), `{"persistent":{"cluster.routing.allocation.enable":"all"}}`, string(b))
 		resp := httpmock.NewStringResponse(200, `{}`)
 		return resp, nil
 	})
@@ -119,11 +139,13 @@ func (t *ElasticsearchHandlerTestSuite) EnableRoutingAllocation() {
 	assert.Error(t.T(), err)
 }
 
-func (t *ElasticsearchHandlerTestSuite) DisableRoutingAllocation() {
+func (t *ElasticsearchHandlerTestSuite) TestDisableRoutingAllocation() {
 
 	urlSetting := fmt.Sprintf("%s/settings", urlCluster)
 
 	httpmock.RegisterResponder("PUT", urlSetting, func(req *http.Request) (*http.Response, error) {
+		b, _ := io.ReadAll(req.Body)
+		assert.JSONEq(t.T(), `{"persistent":{"cluster.routing.allocation.enable":"primaries"}}`, string(b))
 		resp := httpmock.NewStringResponse(200, `{}`)
 		return resp, nil
 	})

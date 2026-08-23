@@ -1,57 +1,37 @@
 package eshandler
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"io"
 
+	elasticsearch "github.com/disaster37/elasticsearch/v9"
+	esapi "github.com/disaster37/elasticsearch/v9/api"
 	"github.com/disaster37/generic-objectmatcher/patch"
-	jsonIterator "github.com/json-iterator/go"
-	olivere "github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
 )
 
+// SecurityPutUserRequest is the user create/update request body.
+type SecurityPutUserRequest struct {
+	Enabled      bool           `json:"enabled,omitempty"`
+	Email        string         `json:"email,omitempty"`
+	FullName     string         `json:"full_name,omitempty"`
+	Metadata     map[string]any `json:"metadata,omitempty"`
+	Password     string         `json:"password,omitempty"`
+	PasswordHash string         `json:"password_hash,omitempty"`
+	Roles        []string       `json:"roles,omitempty"`
+}
+
 // UserCreate permit to create new user
-func (h *ElasticsearchHandlerImpl) UserCreate(name string, user *olivere.XPackSecurityPutUserRequest) (err error) {
-
-	data, err := json.Marshal(user)
-	if err != nil {
-		return err
-	}
-
-	res, err := h.client.API.Security.PutUser(
-		name,
-		bytes.NewReader(data),
-		h.client.API.Security.PutUser.WithContext(context.Background()),
-		h.client.API.Security.PutUser.WithPretty(),
-	)
-
-	if err != nil {
-		return err
-	}
-
-	defer res.Body.Close()
-
-	if res.IsError() {
-		return errors.Errorf("Error when add user %s: %s", name, res.String())
-	}
-
-	return nil
+func (h *ElasticsearchHandlerImpl) UserCreate(name string, user *SecurityPutUserRequest) (err error) {
+	_, err = h.client.Security().PutUser(context.Background(), name, user)
+	return err
 }
 
 // UserUpdate permit to update the user
-func (h *ElasticsearchHandlerImpl) UserUpdate(name string, user *olivere.XPackSecurityPutUserRequest, isProtected ...bool) (err error) {
-
-	isP := false
-
-	if len(isProtected) > 0 && isProtected[0] {
-		isP = true
-	}
+func (h *ElasticsearchHandlerImpl) UserUpdate(name string, user *SecurityPutUserRequest, isProtected ...bool) (err error) {
+	isP := len(isProtected) > 0 && isProtected[0]
 
 	//check if need to update password
 	if user.Password != "" || user.PasswordHash != "" {
-
 		payload := make(map[string]string)
 		if user.Password != "" {
 			payload["password"] = user.Password
@@ -59,26 +39,8 @@ func (h *ElasticsearchHandlerImpl) UserUpdate(name string, user *olivere.XPackSe
 			payload["password_hash"] = user.PasswordHash
 		}
 
-		data, err := json.Marshal(payload)
-		if err != nil {
-			return err
-		}
-
-		res, err := h.client.API.Security.ChangePassword(
-			bytes.NewReader(data),
-			h.client.API.Security.ChangePassword.WithUsername(name),
-			h.client.API.Security.ChangePassword.WithContext(context.Background()),
-			h.client.API.Security.ChangePassword.WithPretty(),
-		)
-
-		if err != nil {
-			return err
-		}
-
-		defer res.Body.Close()
-
-		if res.IsError() {
-			return errors.Errorf("Error when change password for user %s: %s", name, res.String())
+		if _, err := h.client.Security().ChangePassword(context.Background(), name, payload); err != nil {
+			return errors.Wrapf(err, "Error when change password for user %s", name)
 		}
 
 		h.log.Infof("Updated user password %s successfully", name)
@@ -96,25 +58,12 @@ func (h *ElasticsearchHandlerImpl) UserUpdate(name string, user *olivere.XPackSe
 
 // UserDelete permit to delete the user
 func (h *ElasticsearchHandlerImpl) UserDelete(name string) (err error) {
-
-	res, err := h.client.API.Security.DeleteUser(
-		name,
-		h.client.API.Security.DeleteUser.WithContext(context.Background()),
-		h.client.API.Security.DeleteUser.WithPretty(),
-	)
-
+	_, err = h.client.Security().DeleteUser(context.Background(), name)
 	if err != nil {
-		return err
-	}
-
-	defer res.Body.Close()
-
-	if res.IsError() {
-		if res.StatusCode == 404 {
+		if elasticsearch.IsNotFound(err) {
 			return nil
-
 		}
-		return errors.Errorf("Error when delete user %s: %s", name, res.String())
+		return err
 	}
 
 	h.log.Infof("Deleted user %s successfully", name)
@@ -123,59 +72,18 @@ func (h *ElasticsearchHandlerImpl) UserDelete(name string) (err error) {
 }
 
 // UserGet permot to get the user
-func (h *ElasticsearchHandlerImpl) UserGet(name string) (user *olivere.XPackSecurityUser, err error) {
-
-	res, err := h.client.API.Security.GetUser(
-		h.client.API.Security.GetUser.WithContext(context.Background()),
-		h.client.API.Security.GetUser.WithPretty(),
-		h.client.API.Security.GetUser.WithUsername(name),
-	)
+func (h *ElasticsearchHandlerImpl) UserGet(name string) (user *esapi.SecurityUser, err error) {
+	users, err := h.client.Security().GetUser(context.Background(), []string{name})
 	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	if res.IsError() {
-		if res.StatusCode == 404 {
-			return nil, nil
-		}
-		return nil, errors.Errorf("Error when get user %s: %s", name, res.String())
-
-	}
-	b, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	h.log.Debugf("Get user %s successfully:\n%s", name, string(b))
-	userResp := make(olivere.XPackSecurityGetUserResponse)
-	err = json.Unmarshal(b, &userResp)
-	if err != nil {
-		return nil, err
+		return nil, ignoreNotFound(err)
 	}
 
 	h.log.Infof("Read user %s successfully", name)
 
-	tmp := userResp[name]
-	return &tmp, nil
+	return users[name], nil
 }
 
 // UserDiff permit to check if 2 users are the same
-func (h *ElasticsearchHandlerImpl) UserDiff(actualObject, expectedObject, originalObject *olivere.XPackSecurityPutUserRequest) (patchResult *patch.PatchResult, err error) {
-	// If not yet exist
-	if actualObject == nil {
-		expected, err := jsonIterator.ConfigCompatibleWithStandardLibrary.Marshal(expectedObject)
-		if err != nil {
-			return nil, errors.Wrap(err, "Failed to convert expected object to byte sequence")
-		}
-
-		return &patch.PatchResult{
-			Patch:    expected,
-			Current:  expected,
-			Modified: expected,
-			Original: nil,
-			Patched:  expectedObject,
-		}, nil
-	}
-
-	return patch.DefaultPatchMaker.Calculate(actualObject, expectedObject, originalObject)
+func (h *ElasticsearchHandlerImpl) UserDiff(actualObject, expectedObject, originalObject *SecurityPutUserRequest) (patchResult *patch.PatchResult, err error) {
+	return computeDiff(actualObject, expectedObject, originalObject)
 }

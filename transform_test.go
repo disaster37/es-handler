@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	elasticsearch "github.com/disaster37/elasticsearch/v9"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 )
@@ -77,6 +78,12 @@ func (t *ElasticsearchHandlerTestSuite) TestTransformGet() {
 	}
 	assert.Equal(t.T(), transform, resp)
 
+	// When not found
+	httpmock.RegisterResponder("GET", urlTransform, httpmock.NewStringResponder(404, `{"error":{"type":"resource_not_found_exception","reason":"not found"},"status":404}`))
+	resp, err = t.esHandler.TransformGet("test")
+	assert.NoError(t.T(), err)
+	assert.Nil(t.T(), resp)
+
 	// When error
 	httpmock.RegisterResponder("GET", urlTransform, httpmock.NewErrorResponder(errors.New("fack error")))
 	_, err = t.esHandler.TransformGet("test")
@@ -86,7 +93,7 @@ func (t *ElasticsearchHandlerTestSuite) TestTransformGet() {
 func (t *ElasticsearchHandlerTestSuite) TestTransformDelete() {
 
 	httpmock.RegisterResponder("DELETE", urlTransform, func(req *http.Request) (*http.Response, error) {
-		resp := httpmock.NewStringResponse(200, "")
+		resp := httpmock.NewStringResponse(200, "{}")
 		SetHeaders(resp)
 		return resp, nil
 	})
@@ -95,6 +102,15 @@ func (t *ElasticsearchHandlerTestSuite) TestTransformDelete() {
 	if err != nil {
 		t.Fail(err.Error())
 	}
+
+	// When not found
+	httpmock.RegisterResponder("DELETE", urlTransform, httpmock.NewStringResponder(404, `{"error":{"type":"resource_not_found_exception","reason":"not found"},"status":404}`))
+	err = t.esHandler.TransformDelete("test")
+	assert.NoError(t.T(), err)
+
+	// When empty name
+	err = t.esHandler.TransformDelete("")
+	assert.Error(t.T(), err)
 
 	// When error
 	httpmock.RegisterResponder("DELETE", urlTransform, httpmock.NewErrorResponder(errors.New("fack error")))
@@ -151,7 +167,7 @@ func (t *ElasticsearchHandlerTestSuite) TestTransformUpdate() {
 	}
 
 	httpmock.RegisterResponder("PUT", urlTransform, func(req *http.Request) (*http.Response, error) {
-		resp := httpmock.NewStringResponse(200, "")
+		resp := httpmock.NewStringResponse(200, "{}")
 		SetHeaders(resp)
 		return resp, nil
 	})
@@ -160,6 +176,16 @@ func (t *ElasticsearchHandlerTestSuite) TestTransformUpdate() {
 	if err != nil {
 		t.Fail(err.Error())
 	}
+
+	// When empty name
+	err = t.esHandler.TransformUpdate("", transform)
+	assert.Error(t.T(), err)
+
+	// When conflict
+	httpmock.RegisterResponder("PUT", urlTransform, httpmock.NewStringResponder(409, `{"error":{"type":"version_conflict_engine_exception","reason":"conflict"},"status":409}`))
+	err = t.esHandler.TransformUpdate("test", transform)
+	assert.Error(t.T(), err)
+	assert.True(t.T(), elasticsearch.IsConflict(err))
 
 	// When error
 	httpmock.RegisterResponder("PUT", urlTransform, httpmock.NewErrorResponder(errors.New("fack error")))

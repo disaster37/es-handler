@@ -1,14 +1,11 @@
 package eshandler
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"io"
+	"net/url"
 
 	"github.com/disaster37/generic-objectmatcher/patch"
-	jsonIterator "github.com/json-iterator/go"
-	"github.com/pkg/errors"
 )
 
 // SnapshotLifecyclePolicy object returned by API
@@ -48,89 +45,29 @@ type SnapshotLifecyclePolicyGet struct {
 
 // SLMUpdate permit to add or update SLM policy
 func (h *ElasticsearchHandlerImpl) SLMUpdate(name string, policy *SnapshotLifecyclePolicySpec) (err error) {
-
-	b, err := json.Marshal(policy)
-	if err != nil {
-		return err
-	}
-
-	res, err := h.client.API.SlmPutLifecycle(
-		name,
-		h.client.API.SlmPutLifecycle.WithBody(bytes.NewReader(b)),
-		h.client.API.SlmPutLifecycle.WithContext(context.Background()),
-		h.client.API.SlmPutLifecycle.WithPretty(),
-	)
-
-	if err != nil {
-		return err
-	}
-
-	defer res.Body.Close()
-
-	if res.IsError() {
-		return errors.Errorf("Error when add snapshot lifecycle policy %s: %s", name, res.String())
-	}
-
-	return nil
+	_, err = h.client.SLM().PutLifecycle(context.Background(), name, policy)
+	return err
 }
 
 // SLMDelete permit to delete SLM policy
 func (h *ElasticsearchHandlerImpl) SLMDelete(name string) (err error) {
-
-	res, err := h.client.API.SlmDeleteLifecycle(
-		name,
-		h.client.API.SlmDeleteLifecycle.WithContext(context.Background()),
-		h.client.API.SlmDeleteLifecycle.WithPretty(),
-	)
-
-	if err != nil {
-		return err
-	}
-
-	defer res.Body.Close()
-
-	if res.IsError() {
-		if res.StatusCode == 404 {
-			return nil
-		}
-		return errors.Errorf("Error when delete snapshot lifecycle policy %s: %s", name, res.String())
-
-	}
-
-	return nil
+	_, err = h.client.SLM().DeleteLifecycle(context.Background(), name)
+	return ignoreNotFound(err)
 }
 
 // SLMGet permit to get SLM policy
 func (h *ElasticsearchHandlerImpl) SLMGet(name string) (policy *SnapshotLifecyclePolicySpec, err error) {
-
-	res, err := h.client.API.SlmGetLifecycle(
-		h.client.API.SlmGetLifecycle.WithContext(context.Background()),
-		h.client.API.SlmGetLifecycle.WithPretty(),
-		h.client.API.SlmGetLifecycle.WithPolicyID(name),
-	)
-	if err != nil {
+	b, err := h.getRaw("/_slm/policy/" + url.PathEscape(name))
+	if err != nil || b == nil {
 		return nil, err
 	}
-	defer res.Body.Close()
-	if res.IsError() {
-		if res.StatusCode == 404 {
-			return nil, nil
-		}
-		return nil, errors.Errorf("Error when get snapshot lifecycle policy %s: %s", name, res.String())
 
-	}
-	b, err := io.ReadAll(res.Body)
-	if err != nil {
+	slm := make(SnapshotLifecyclePolicy)
+	if err = json.Unmarshal(b, &slm); err != nil {
 		return nil, err
 	}
 
 	h.log.Debugf("Get snapshot lifecycle policy successfully:\n%s", string(b))
-
-	slm := make(SnapshotLifecyclePolicy)
-	err = json.Unmarshal(b, &slm)
-	if err != nil {
-		return nil, err
-	}
 
 	// Manage bug https://github.com/elastic/elasticsearch/issues/47664
 	if len(slm) == 0 {
@@ -142,22 +79,5 @@ func (h *ElasticsearchHandlerImpl) SLMGet(name string) (policy *SnapshotLifecycl
 
 // SLMDiff permit to check if 2 policy are the same
 func (h *ElasticsearchHandlerImpl) SLMDiff(actualObject, expectedObject, originalObject *SnapshotLifecyclePolicySpec) (patchResult *patch.PatchResult, err error) {
-
-	// If not yet exist
-	if actualObject == nil {
-		expected, err := jsonIterator.ConfigCompatibleWithStandardLibrary.Marshal(expectedObject)
-		if err != nil {
-			return nil, errors.Wrap(err, "Failed to convert expected object to byte sequence")
-		}
-
-		return &patch.PatchResult{
-			Patch:    expected,
-			Current:  expected,
-			Modified: expected,
-			Original: nil,
-			Patched:  expectedObject,
-		}, nil
-	}
-
-	return patch.DefaultPatchMaker.Calculate(actualObject, expectedObject, originalObject)
+	return computeDiff(actualObject, expectedObject, originalObject)
 }

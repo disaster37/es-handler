@@ -3,10 +3,12 @@ package eshandler
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
+	elasticsearch "github.com/disaster37/elasticsearch/v9"
+	esapi "github.com/disaster37/elasticsearch/v9/api"
 	"github.com/jarcoal/httpmock"
-	olivere "github.com/olivere/elastic/v7"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,18 +17,8 @@ var urlLicense = fmt.Sprintf("%s/_license", baseURL)
 func (t *ElasticsearchHandlerTestSuite) TestLicenseGet() {
 
 	// Normale use case
-	result := &olivere.XPackInfoServiceResponse{
-		License: olivere.XPackInfoLicense{
-			UID:  "test",
-			Type: "basic",
-		},
-	}
-
 	httpmock.RegisterResponder("GET", urlLicense, func(req *http.Request) (*http.Response, error) {
-		resp, err := httpmock.NewJsonResponse(200, result)
-		if err != nil {
-			panic(err)
-		}
+		resp := httpmock.NewStringResponse(200, `{"license":{"uid":"test","type":"basic"}}`)
 		SetHeaders(resp)
 		return resp, nil
 	})
@@ -38,6 +30,18 @@ func (t *ElasticsearchHandlerTestSuite) TestLicenseGet() {
 	assert.Equal(t.T(), "test", license.UID)
 	assert.Equal(t.T(), "basic", license.Type)
 
+	// When not found
+	httpmock.RegisterResponder("GET", urlLicense, httpmock.NewStringResponder(404, `{"error":{"type":"resource_not_found_exception","reason":"not found"},"status":404}`))
+	license, err = t.esHandler.LicenseGet()
+	assert.NoError(t.T(), err)
+	assert.Nil(t.T(), license)
+
+	// When unauthorized
+	httpmock.RegisterResponder("GET", urlLicense, httpmock.NewStringResponder(401, `{"error":{"type":"security_exception","reason":"unauthorized"},"status":401}`))
+	_, err = t.esHandler.LicenseGet()
+	assert.Error(t.T(), err)
+	assert.True(t.T(), elasticsearch.IsUnauthorized(err))
+
 	// When error
 	httpmock.RegisterResponder("GET", urlLicense, httpmock.NewErrorResponder(errors.New("fack error")))
 	_, err = t.esHandler.LicenseGet()
@@ -48,7 +52,7 @@ func (t *ElasticsearchHandlerTestSuite) TestLicenseDelete() {
 
 	// Normale use case
 	httpmock.RegisterResponder("DELETE", urlLicense, func(req *http.Request) (*http.Response, error) {
-		resp := httpmock.NewStringResponse(200, "")
+		resp := httpmock.NewStringResponse(200, "{}")
 		SetHeaders(resp)
 		return resp, nil
 	})
@@ -57,6 +61,12 @@ func (t *ElasticsearchHandlerTestSuite) TestLicenseDelete() {
 	if err != nil {
 		t.Fail(err.Error())
 	}
+
+	// When not found
+	httpmock.RegisterResponder("DELETE", urlLicense, httpmock.NewStringResponder(404, `{"error":{"type":"resource_not_found_exception","reason":"not found"},"status":404}`))
+	err = t.esHandler.LicenseDelete()
+	assert.NoError(t.T(), err)
+
 	// When error
 	httpmock.RegisterResponder("DELETE", urlLicense, httpmock.NewErrorResponder(errors.New("Fake error")))
 	err = t.esHandler.LicenseDelete()
@@ -65,21 +75,31 @@ func (t *ElasticsearchHandlerTestSuite) TestLicenseDelete() {
 
 func (t *ElasticsearchHandlerTestSuite) TestLicenseUpdate() {
 
+	license := `{"license":{"uid":"test","type":"basic"}}`
+
 	// Normale use case
 	httpmock.RegisterResponder("PUT", urlLicense, func(req *http.Request) (*http.Response, error) {
-		resp := httpmock.NewStringResponse(200, "")
+		b, _ := io.ReadAll(req.Body)
+		assert.Equal(t.T(), license, string(b))
+		resp := httpmock.NewStringResponse(200, "{}")
 		SetHeaders(resp)
 		return resp, nil
 	})
 
-	err := t.esHandler.LicenseUpdate("fake license")
+	err := t.esHandler.LicenseUpdate(license)
 	if err != nil {
 		t.Fail(err.Error())
 	}
 
+	// When conflict
+	httpmock.RegisterResponder("PUT", urlLicense, httpmock.NewStringResponder(409, `{"error":{"type":"version_conflict_engine_exception","reason":"conflict"},"status":409}`))
+	err = t.esHandler.LicenseUpdate(license)
+	assert.Error(t.T(), err)
+	assert.True(t.T(), elasticsearch.IsConflict(err))
+
 	// When error
 	httpmock.RegisterResponder("PUT", urlLicense, httpmock.NewErrorResponder(errors.New("Fake error")))
-	err = t.esHandler.LicenseUpdate("fake license")
+	err = t.esHandler.LicenseUpdate(license)
 	assert.Error(t.T(), err)
 }
 
@@ -92,7 +112,7 @@ func (t *ElasticsearchHandlerTestSuite) TestLicenseEnableBasic() {
 		return resp, nil
 	})
 	httpmock.RegisterResponder("POST", fmt.Sprintf("%s/start_basic", urlLicense), func(req *http.Request) (*http.Response, error) {
-		resp := httpmock.NewStringResponse(200, "")
+		resp := httpmock.NewStringResponse(200, "{}")
 		SetHeaders(resp)
 		return resp, nil
 	})
@@ -109,7 +129,7 @@ func (t *ElasticsearchHandlerTestSuite) TestLicenseEnableBasic() {
 		return resp, nil
 	})
 	httpmock.RegisterResponder("POST", fmt.Sprintf("%s/start_basic", urlLicense), func(req *http.Request) (*http.Response, error) {
-		resp := httpmock.NewStringResponse(200, "")
+		resp := httpmock.NewStringResponse(200, "{}")
 		SetHeaders(resp)
 		return resp, nil
 	})
@@ -132,11 +152,11 @@ func (t *ElasticsearchHandlerTestSuite) TestLicenseEnableBasic() {
 func (t *ElasticsearchHandlerTestSuite) TestLicenseDiff() {
 
 	// No diff, same UID and not basic
-	actual := &olivere.XPackInfoLicense{
+	actual := &esapi.LicenseInfo{
 		UID:  "test",
 		Type: "gold",
 	}
-	new := &olivere.XPackInfoLicense{
+	new := &esapi.LicenseInfo{
 		UID:  "test",
 		Type: "gold",
 	}
@@ -144,33 +164,33 @@ func (t *ElasticsearchHandlerTestSuite) TestLicenseDiff() {
 	assert.False(t.T(), t.esHandler.LicenseDiff(actual, new))
 
 	// No diff, basic license
-	actual = &olivere.XPackInfoLicense{
+	actual = &esapi.LicenseInfo{
 		UID:  "test",
 		Type: "basic",
 	}
-	new = &olivere.XPackInfoLicense{
+	new = &esapi.LicenseInfo{
 		UID:  "test2",
 		Type: "basic",
 	}
 	assert.False(t.T(), t.esHandler.LicenseDiff(actual, new))
 
 	// Diff, not same id and not basic
-	actual = &olivere.XPackInfoLicense{
+	actual = &esapi.LicenseInfo{
 		UID:  "test",
 		Type: "gold",
 	}
-	new = &olivere.XPackInfoLicense{
+	new = &esapi.LicenseInfo{
 		UID:  "test2",
 		Type: "gold",
 	}
 	assert.True(t.T(), t.esHandler.LicenseDiff(actual, new))
 
 	// Diff, not same license type
-	actual = &olivere.XPackInfoLicense{
+	actual = &esapi.LicenseInfo{
 		UID:  "test",
 		Type: "gold",
 	}
-	new = &olivere.XPackInfoLicense{
+	new = &esapi.LicenseInfo{
 		UID:  "test2",
 		Type: "basic",
 	}
