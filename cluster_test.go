@@ -312,6 +312,19 @@ func (t *ElasticsearchHandlerTestSuite) TestGetClusterRoutingAllocation() {
 	assert.Empty(t.T(), allocationEnable)
 	assert.Empty(t.T(), rebalanceEnable)
 
+	// When transient settings have an unexpected shape, values stay empty (no panic)
+	httpmock.RegisterResponder("GET", urlSetting, func(req *http.Request) (*http.Response, error) {
+		resp := httpmock.NewStringResponse(200, `{"persistent": {}, "transient": {"cluster": "unexpected"}}`)
+		SetHeaders(resp)
+		return resp, nil
+	})
+	allocationEnable, rebalanceEnable, err = t.esHandler.GetClusterRoutingAllocation()
+	if err != nil {
+		t.Fail(err.Error())
+	}
+	assert.Empty(t.T(), allocationEnable)
+	assert.Empty(t.T(), rebalanceEnable)
+
 	// When error
 	httpmock.RegisterResponder("GET", urlSetting, httpmock.NewErrorResponder(errors.New("fack error")))
 	_, _, err = t.esHandler.GetClusterRoutingAllocation()
@@ -351,6 +364,27 @@ func (t *ElasticsearchHandlerTestSuite) TestGetClusterInfo() {
 	assert.Equal(t.T(), "test-cluster", info.Name)
 	assert.Equal(t.T(), "9.0.0", info.Version)
 	assert.Equal(t.T(), "You Know, for Search", info.Tagline)
+
+	// When version is missing from the response, Version stays empty (no nil dereference)
+	httpmock.RegisterResponder("GET", baseURL+"/", func(req *http.Request) (*http.Response, error) {
+		resp := httpmock.NewStringResponse(200, `{
+			"name" : "node-1",
+			"cluster_name" : "test-cluster",
+			"cluster_uuid" : "abc123",
+			"tagline" : "You Know, for Search"
+		}`)
+		SetHeaders(resp)
+		return resp, nil
+	})
+	info, err = t.esHandler.GetClusterInfo(context.Background())
+	if err != nil {
+		t.Fail(err.Error())
+	}
+	if assert.NotNil(t.T(), info) {
+		assert.Equal(t.T(), "test-cluster", info.Name)
+		assert.Empty(t.T(), info.Version)
+		assert.Equal(t.T(), "You Know, for Search", info.Tagline)
+	}
 
 	// When unauthorized
 	httpmock.RegisterResponder("GET", baseURL+"/", httpmock.NewStringResponder(401, `{"error":{"type":"security_exception","reason":"unauthorized"},"status":401}`))

@@ -84,6 +84,30 @@ func (t *ElasticsearchHandlerTestSuite) TestGetNodeShutdown() {
 	}
 	assert.Nil(t.T(), info)
 
+	// When the status map is missing, Status stays empty (no panic on type assertion)
+	httpmock.RegisterResponder("GET", urlShutdown, func(req *http.Request) (*http.Response, error) {
+		resp := httpmock.NewStringResponse(200, `{
+			"nodes": [
+				{
+					"node_id": "node-1",
+					"type": "restart",
+					"reason": "rolling-restart"
+				}
+			]
+		}`)
+		SetHeaders(resp)
+		return resp, nil
+	})
+	info, err = t.esHandler.GetNodeShutdown(context.Background(), "node-1")
+	if err != nil {
+		t.Fail(err.Error())
+	}
+	if assert.NotNil(t.T(), info) {
+		assert.Equal(t.T(), "node-1", info.NodeID)
+		assert.Equal(t.T(), "restart", info.Type)
+		assert.Empty(t.T(), info.Status)
+	}
+
 	// When error
 	httpmock.RegisterResponder("GET", urlShutdown, httpmock.NewErrorResponder(errors.New("fack error")))
 	_, err = t.esHandler.GetNodeShutdown(context.Background(), "node-1")

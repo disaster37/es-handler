@@ -14,7 +14,9 @@ type ShardInfo struct {
 	Primary  bool   // true = primary, false = replica
 	State    string // STARTED, UNASSIGNED, INITIALIZING, RELOCATING
 	NodeName string // empty if unassigned
-	NodeID   string // empty if unassigned
+	// NodeID is currently never populated: the Cat Shards API does not expose
+	// node IDs (only node names). It is kept for forward compatibility.
+	NodeID string
 }
 
 // Key returns a unique key for the shard (index-shard).
