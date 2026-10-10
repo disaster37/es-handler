@@ -1,6 +1,7 @@
 package eshandler
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -158,5 +159,305 @@ func (t *ElasticsearchHandlerTestSuite) TestDisableRoutingAllocation() {
 	// When error
 	httpmock.RegisterResponder("PUT", urlSetting, httpmock.NewErrorResponder(errors.New("fack error")))
 	err = t.esHandler.DisableRoutingAllocation()
+	assert.Error(t.T(), err)
+}
+
+func (t *ElasticsearchHandlerTestSuite) TestDisableReplicaShardsAllocationTransient() {
+
+	urlSetting := fmt.Sprintf("%s/settings", urlCluster)
+
+	httpmock.RegisterResponder("PUT", urlSetting, func(req *http.Request) (*http.Response, error) {
+		b, _ := io.ReadAll(req.Body)
+		assert.JSONEq(t.T(), `{"transient":{"cluster.routing.allocation.enable":"primaries"}}`, string(b))
+		resp := httpmock.NewStringResponse(200, `{}`)
+		return resp, nil
+	})
+
+	err := t.esHandler.DisableReplicaShardsAllocationTransient()
+	if err != nil {
+		t.Fail(err.Error())
+	}
+
+	// When error
+	httpmock.RegisterResponder("PUT", urlSetting, httpmock.NewErrorResponder(errors.New("fack error")))
+	err = t.esHandler.DisableReplicaShardsAllocationTransient()
+	assert.Error(t.T(), err)
+}
+
+func (t *ElasticsearchHandlerTestSuite) TestEnableShardAllocationTransient() {
+
+	urlSetting := fmt.Sprintf("%s/settings", urlCluster)
+
+	httpmock.RegisterResponder("PUT", urlSetting, func(req *http.Request) (*http.Response, error) {
+		b, _ := io.ReadAll(req.Body)
+		assert.JSONEq(t.T(), `{"transient":{"cluster.routing.allocation.enable":"all"}}`, string(b))
+		resp := httpmock.NewStringResponse(200, `{}`)
+		return resp, nil
+	})
+
+	err := t.esHandler.EnableShardAllocationTransient()
+	if err != nil {
+		t.Fail(err.Error())
+	}
+
+	// When error
+	httpmock.RegisterResponder("PUT", urlSetting, httpmock.NewErrorResponder(errors.New("fack error")))
+	err = t.esHandler.EnableShardAllocationTransient()
+	assert.Error(t.T(), err)
+}
+
+func (t *ElasticsearchHandlerTestSuite) TestDisableRoutingRebalanceTransient() {
+
+	urlSetting := fmt.Sprintf("%s/settings", urlCluster)
+
+	httpmock.RegisterResponder("PUT", urlSetting, func(req *http.Request) (*http.Response, error) {
+		b, _ := io.ReadAll(req.Body)
+		assert.JSONEq(t.T(), `{"transient":{"cluster.routing.rebalance.enable":"none"}}`, string(b))
+		resp := httpmock.NewStringResponse(200, `{}`)
+		return resp, nil
+	})
+
+	err := t.esHandler.DisableRoutingRebalanceTransient()
+	if err != nil {
+		t.Fail(err.Error())
+	}
+
+	// When error
+	httpmock.RegisterResponder("PUT", urlSetting, httpmock.NewErrorResponder(errors.New("fack error")))
+	err = t.esHandler.DisableRoutingRebalanceTransient()
+	assert.Error(t.T(), err)
+}
+
+func (t *ElasticsearchHandlerTestSuite) TestEnableRoutingRebalanceTransient() {
+
+	urlSetting := fmt.Sprintf("%s/settings", urlCluster)
+
+	httpmock.RegisterResponder("PUT", urlSetting, func(req *http.Request) (*http.Response, error) {
+		b, _ := io.ReadAll(req.Body)
+		assert.JSONEq(t.T(), `{"transient":{"cluster.routing.rebalance.enable":"all"}}`, string(b))
+		resp := httpmock.NewStringResponse(200, `{}`)
+		return resp, nil
+	})
+
+	err := t.esHandler.EnableRoutingRebalanceTransient()
+	if err != nil {
+		t.Fail(err.Error())
+	}
+
+	// When error
+	httpmock.RegisterResponder("PUT", urlSetting, httpmock.NewErrorResponder(errors.New("fack error")))
+	err = t.esHandler.EnableRoutingRebalanceTransient()
+	assert.Error(t.T(), err)
+}
+
+func (t *ElasticsearchHandlerTestSuite) TestRemoveTransientAllocationSettings() {
+
+	urlSetting := fmt.Sprintf("%s/settings", urlCluster)
+
+	httpmock.RegisterResponder("PUT", urlSetting, func(req *http.Request) (*http.Response, error) {
+		b, _ := io.ReadAll(req.Body)
+		assert.JSONEq(t.T(), `{"transient":{"cluster.routing.allocation.enable":null,"cluster.routing.rebalance.enable":null}}`, string(b))
+		resp := httpmock.NewStringResponse(200, `{}`)
+		return resp, nil
+	})
+
+	err := t.esHandler.RemoveTransientAllocationSettings()
+	if err != nil {
+		t.Fail(err.Error())
+	}
+
+	// When error
+	httpmock.RegisterResponder("PUT", urlSetting, httpmock.NewErrorResponder(errors.New("fack error")))
+	err = t.esHandler.RemoveTransientAllocationSettings()
+	assert.Error(t.T(), err)
+}
+
+func (t *ElasticsearchHandlerTestSuite) TestGetClusterRoutingAllocation() {
+
+	urlSetting := fmt.Sprintf("%s/settings", urlCluster)
+
+	httpmock.RegisterResponder("GET", urlSetting, func(req *http.Request) (*http.Response, error) {
+		resp := httpmock.NewStringResponse(200, `{
+			"persistent": {},
+			"transient": {
+				"cluster": {
+					"routing": {
+						"allocation": {"enable": "primaries"},
+						"rebalance": {"enable": "none"}
+					}
+				}
+			}
+		}`)
+		SetHeaders(resp)
+		return resp, nil
+	})
+
+	allocationEnable, rebalanceEnable, err := t.esHandler.GetClusterRoutingAllocation()
+	if err != nil {
+		t.Fail(err.Error())
+	}
+	assert.Equal(t.T(), "primaries", allocationEnable)
+	assert.Equal(t.T(), "none", rebalanceEnable)
+
+	// When no transient settings
+	httpmock.RegisterResponder("GET", urlSetting, func(req *http.Request) (*http.Response, error) {
+		resp := httpmock.NewStringResponse(200, `{"persistent": {}, "transient": {}}`)
+		SetHeaders(resp)
+		return resp, nil
+	})
+	allocationEnable, rebalanceEnable, err = t.esHandler.GetClusterRoutingAllocation()
+	if err != nil {
+		t.Fail(err.Error())
+	}
+	assert.Empty(t.T(), allocationEnable)
+	assert.Empty(t.T(), rebalanceEnable)
+
+	// When transient settings have an unexpected shape, values stay empty (no panic)
+	httpmock.RegisterResponder("GET", urlSetting, func(req *http.Request) (*http.Response, error) {
+		resp := httpmock.NewStringResponse(200, `{"persistent": {}, "transient": {"cluster": "unexpected"}}`)
+		SetHeaders(resp)
+		return resp, nil
+	})
+	allocationEnable, rebalanceEnable, err = t.esHandler.GetClusterRoutingAllocation()
+	if err != nil {
+		t.Fail(err.Error())
+	}
+	assert.Empty(t.T(), allocationEnable)
+	assert.Empty(t.T(), rebalanceEnable)
+
+	// When error
+	httpmock.RegisterResponder("GET", urlSetting, httpmock.NewErrorResponder(errors.New("fack error")))
+	_, _, err = t.esHandler.GetClusterRoutingAllocation()
+	assert.Error(t.T(), err)
+}
+
+func (t *ElasticsearchHandlerTestSuite) TestGetClusterInfo() {
+
+	rawInfo := `{
+		"name" : "node-1",
+		"cluster_name" : "test-cluster",
+		"cluster_uuid" : "abc123",
+		"version" : {
+			"number" : "9.0.0",
+			"build_flavor" : "default",
+			"build_type" : "docker",
+			"build_hash" : "abcdef",
+			"build_date" : "2024-01-01T00:00:00.000Z",
+			"build_snapshot" : false,
+			"lucene_version" : "10.0.0",
+			"minimum_wire_compatibility_version" : "8.0.0",
+			"minimum_index_compatibility_version" : "8.0.0"
+		},
+		"tagline" : "You Know, for Search"
+	}`
+
+	httpmock.RegisterResponder("GET", baseURL+"/", func(req *http.Request) (*http.Response, error) {
+		resp := httpmock.NewStringResponse(200, rawInfo)
+		SetHeaders(resp)
+		return resp, nil
+	})
+
+	info, err := t.esHandler.GetClusterInfo(context.Background())
+	if err != nil {
+		t.Fail(err.Error())
+	}
+	assert.Equal(t.T(), "test-cluster", info.Name)
+	assert.Equal(t.T(), "9.0.0", info.Version)
+	assert.Equal(t.T(), "You Know, for Search", info.Tagline)
+
+	// When version is missing from the response, Version stays empty (no nil dereference)
+	httpmock.RegisterResponder("GET", baseURL+"/", func(req *http.Request) (*http.Response, error) {
+		resp := httpmock.NewStringResponse(200, `{
+			"name" : "node-1",
+			"cluster_name" : "test-cluster",
+			"cluster_uuid" : "abc123",
+			"tagline" : "You Know, for Search"
+		}`)
+		SetHeaders(resp)
+		return resp, nil
+	})
+	info, err = t.esHandler.GetClusterInfo(context.Background())
+	if err != nil {
+		t.Fail(err.Error())
+	}
+	if assert.NotNil(t.T(), info) {
+		assert.Equal(t.T(), "test-cluster", info.Name)
+		assert.Empty(t.T(), info.Version)
+		assert.Equal(t.T(), "You Know, for Search", info.Tagline)
+	}
+
+	// When unauthorized
+	httpmock.RegisterResponder("GET", baseURL+"/", httpmock.NewStringResponder(401, `{"error":{"type":"security_exception","reason":"unauthorized"},"status":401}`))
+	_, err = t.esHandler.GetClusterInfo(context.Background())
+	assert.Error(t.T(), err)
+	assert.True(t.T(), elasticsearch.IsUnauthorized(err))
+
+	// When error
+	httpmock.RegisterResponder("GET", baseURL+"/", httpmock.NewErrorResponder(errors.New("fack error")))
+	_, err = t.esHandler.GetClusterInfo(context.Background())
+	assert.Error(t.T(), err)
+}
+
+func (t *ElasticsearchHandlerTestSuite) TestGetVersion() {
+
+	httpmock.RegisterResponder("GET", baseURL+"/", func(req *http.Request) (*http.Response, error) {
+		resp := httpmock.NewStringResponse(200, `{
+			"name" : "node-1",
+			"cluster_name" : "test-cluster",
+			"cluster_uuid" : "abc123",
+			"version" : {"number" : "9.0.0"},
+			"tagline" : "You Know, for Search"
+		}`)
+		SetHeaders(resp)
+		return resp, nil
+	})
+
+	version, err := t.esHandler.GetVersion(context.Background())
+	if err != nil {
+		t.Fail(err.Error())
+	}
+	assert.Equal(t.T(), "9.0.0", version)
+
+	// When error
+	httpmock.RegisterResponder("GET", baseURL+"/", httpmock.NewErrorResponder(errors.New("fack error")))
+	_, err = t.esHandler.GetVersion(context.Background())
+	assert.Error(t.T(), err)
+}
+
+func (t *ElasticsearchHandlerTestSuite) TestFlush() {
+
+	httpmock.RegisterResponder("POST", fmt.Sprintf("%s/_flush", baseURL), func(req *http.Request) (*http.Response, error) {
+		resp := httpmock.NewStringResponse(200, `{"_shards":{"total":2,"successful":2,"failed":0}}`)
+		SetHeaders(resp)
+		return resp, nil
+	})
+
+	err := t.esHandler.Flush(context.Background())
+	if err != nil {
+		t.Fail(err.Error())
+	}
+
+	// When error
+	httpmock.RegisterResponder("POST", fmt.Sprintf("%s/_flush", baseURL), httpmock.NewErrorResponder(errors.New("fack error")))
+	err = t.esHandler.Flush(context.Background())
+	assert.Error(t.T(), err)
+}
+
+func (t *ElasticsearchHandlerTestSuite) TestSyncedFlush() {
+
+	httpmock.RegisterResponder("POST", fmt.Sprintf("%s/_flush", baseURL), func(req *http.Request) (*http.Response, error) {
+		resp := httpmock.NewStringResponse(200, `{"_shards":{"total":2,"successful":2,"failed":0}}`)
+		SetHeaders(resp)
+		return resp, nil
+	})
+
+	err := t.esHandler.SyncedFlush(context.Background())
+	if err != nil {
+		t.Fail(err.Error())
+	}
+
+	// When error
+	httpmock.RegisterResponder("POST", fmt.Sprintf("%s/_flush", baseURL), httpmock.NewErrorResponder(errors.New("fack error")))
+	err = t.esHandler.SyncedFlush(context.Background())
 	assert.Error(t.T(), err)
 }

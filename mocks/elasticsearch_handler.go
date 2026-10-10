@@ -9,6 +9,7 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	elasticsearch "github.com/disaster37/elasticsearch/v9"
@@ -130,6 +131,50 @@ func (mr *MockElasticsearchHandlerMockRecorder) ComponentTemplateUpdate(arg0, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ComponentTemplateUpdate", reflect.TypeOf((*MockElasticsearchHandler)(nil).ComponentTemplateUpdate), arg0, arg1)
 }
 
+// CountStartedReplicas mocks base method.
+func (m *MockElasticsearchHandler) CountStartedReplicas(arg0 context.Context, arg1, arg2, arg3 string) (int, int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountStartedReplicas", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// CountStartedReplicas indicates an expected call of CountStartedReplicas.
+func (mr *MockElasticsearchHandlerMockRecorder) CountStartedReplicas(arg0, arg1, arg2, arg3 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountStartedReplicas", reflect.TypeOf((*MockElasticsearchHandler)(nil).CountStartedReplicas), arg0, arg1, arg2, arg3)
+}
+
+// DeleteNodeShutdown mocks base method.
+func (m *MockElasticsearchHandler) DeleteNodeShutdown(arg0 context.Context, arg1 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteNodeShutdown", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteNodeShutdown indicates an expected call of DeleteNodeShutdown.
+func (mr *MockElasticsearchHandlerMockRecorder) DeleteNodeShutdown(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteNodeShutdown", reflect.TypeOf((*MockElasticsearchHandler)(nil).DeleteNodeShutdown), arg0, arg1)
+}
+
+// DisableReplicaShardsAllocationTransient mocks base method.
+func (m *MockElasticsearchHandler) DisableReplicaShardsAllocationTransient() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DisableReplicaShardsAllocationTransient")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DisableReplicaShardsAllocationTransient indicates an expected call of DisableReplicaShardsAllocationTransient.
+func (mr *MockElasticsearchHandlerMockRecorder) DisableReplicaShardsAllocationTransient() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisableReplicaShardsAllocationTransient", reflect.TypeOf((*MockElasticsearchHandler)(nil).DisableReplicaShardsAllocationTransient))
+}
+
 // DisableRoutingAllocation mocks base method.
 func (m *MockElasticsearchHandler) DisableRoutingAllocation() error {
 	m.ctrl.T.Helper()
@@ -158,6 +203,20 @@ func (mr *MockElasticsearchHandlerMockRecorder) DisableRoutingRebalance() *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisableRoutingRebalance", reflect.TypeOf((*MockElasticsearchHandler)(nil).DisableRoutingRebalance))
 }
 
+// DisableRoutingRebalanceTransient mocks base method.
+func (m *MockElasticsearchHandler) DisableRoutingRebalanceTransient() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DisableRoutingRebalanceTransient")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DisableRoutingRebalanceTransient indicates an expected call of DisableRoutingRebalanceTransient.
+func (mr *MockElasticsearchHandlerMockRecorder) DisableRoutingRebalanceTransient() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisableRoutingRebalanceTransient", reflect.TypeOf((*MockElasticsearchHandler)(nil).DisableRoutingRebalanceTransient))
+}
+
 // EnableRoutingAllocation mocks base method.
 func (m *MockElasticsearchHandler) EnableRoutingAllocation() error {
 	m.ctrl.T.Helper()
@@ -184,6 +243,214 @@ func (m *MockElasticsearchHandler) EnableRoutingRebalance() error {
 func (mr *MockElasticsearchHandlerMockRecorder) EnableRoutingRebalance() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableRoutingRebalance", reflect.TypeOf((*MockElasticsearchHandler)(nil).EnableRoutingRebalance))
+}
+
+// EnableRoutingRebalanceTransient mocks base method.
+func (m *MockElasticsearchHandler) EnableRoutingRebalanceTransient() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnableRoutingRebalanceTransient")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EnableRoutingRebalanceTransient indicates an expected call of EnableRoutingRebalanceTransient.
+func (mr *MockElasticsearchHandlerMockRecorder) EnableRoutingRebalanceTransient() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableRoutingRebalanceTransient", reflect.TypeOf((*MockElasticsearchHandler)(nil).EnableRoutingRebalanceTransient))
+}
+
+// EnableShardAllocationTransient mocks base method.
+func (m *MockElasticsearchHandler) EnableShardAllocationTransient() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnableShardAllocationTransient")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EnableShardAllocationTransient indicates an expected call of EnableShardAllocationTransient.
+func (mr *MockElasticsearchHandlerMockRecorder) EnableShardAllocationTransient() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableShardAllocationTransient", reflect.TypeOf((*MockElasticsearchHandler)(nil).EnableShardAllocationTransient))
+}
+
+// Flush mocks base method.
+func (m *MockElasticsearchHandler) Flush(arg0 context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Flush", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Flush indicates an expected call of Flush.
+func (mr *MockElasticsearchHandlerMockRecorder) Flush(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Flush", reflect.TypeOf((*MockElasticsearchHandler)(nil).Flush), arg0)
+}
+
+// GetAllNodeShutdowns mocks base method.
+func (m *MockElasticsearchHandler) GetAllNodeShutdowns(arg0 context.Context) ([]eshandler.NodeShutdownInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllNodeShutdowns", arg0)
+	ret0, _ := ret[0].([]eshandler.NodeShutdownInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllNodeShutdowns indicates an expected call of GetAllNodeShutdowns.
+func (mr *MockElasticsearchHandlerMockRecorder) GetAllNodeShutdowns(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllNodeShutdowns", reflect.TypeOf((*MockElasticsearchHandler)(nil).GetAllNodeShutdowns), arg0)
+}
+
+// GetClusterInfo mocks base method.
+func (m *MockElasticsearchHandler) GetClusterInfo(arg0 context.Context) (*eshandler.ClusterInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetClusterInfo", arg0)
+	ret0, _ := ret[0].(*eshandler.ClusterInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetClusterInfo indicates an expected call of GetClusterInfo.
+func (mr *MockElasticsearchHandlerMockRecorder) GetClusterInfo(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusterInfo", reflect.TypeOf((*MockElasticsearchHandler)(nil).GetClusterInfo), arg0)
+}
+
+// GetClusterRoutingAllocation mocks base method.
+func (m *MockElasticsearchHandler) GetClusterRoutingAllocation() (string, string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetClusterRoutingAllocation")
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetClusterRoutingAllocation indicates an expected call of GetClusterRoutingAllocation.
+func (mr *MockElasticsearchHandlerMockRecorder) GetClusterRoutingAllocation() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusterRoutingAllocation", reflect.TypeOf((*MockElasticsearchHandler)(nil).GetClusterRoutingAllocation))
+}
+
+// GetNodeNameToIDMap mocks base method.
+func (m *MockElasticsearchHandler) GetNodeNameToIDMap(arg0 context.Context) (map[string]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNodeNameToIDMap", arg0)
+	ret0, _ := ret[0].(map[string]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetNodeNameToIDMap indicates an expected call of GetNodeNameToIDMap.
+func (mr *MockElasticsearchHandlerMockRecorder) GetNodeNameToIDMap(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNodeNameToIDMap", reflect.TypeOf((*MockElasticsearchHandler)(nil).GetNodeNameToIDMap), arg0)
+}
+
+// GetNodeShutdown mocks base method.
+func (m *MockElasticsearchHandler) GetNodeShutdown(arg0 context.Context, arg1 string) (*eshandler.NodeShutdownInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNodeShutdown", arg0, arg1)
+	ret0, _ := ret[0].(*eshandler.NodeShutdownInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetNodeShutdown indicates an expected call of GetNodeShutdown.
+func (mr *MockElasticsearchHandlerMockRecorder) GetNodeShutdown(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNodeShutdown", reflect.TypeOf((*MockElasticsearchHandler)(nil).GetNodeShutdown), arg0, arg1)
+}
+
+// GetNodesInfo mocks base method.
+func (m *MockElasticsearchHandler) GetNodesInfo(arg0 context.Context) (map[string]eshandler.NodeInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNodesInfo", arg0)
+	ret0, _ := ret[0].(map[string]eshandler.NodeInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetNodesInfo indicates an expected call of GetNodesInfo.
+func (mr *MockElasticsearchHandlerMockRecorder) GetNodesInfo(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNodesInfo", reflect.TypeOf((*MockElasticsearchHandler)(nil).GetNodesInfo), arg0)
+}
+
+// GetShards mocks base method.
+func (m *MockElasticsearchHandler) GetShards(arg0 context.Context) ([]eshandler.ShardInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetShards", arg0)
+	ret0, _ := ret[0].([]eshandler.ShardInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetShards indicates an expected call of GetShards.
+func (mr *MockElasticsearchHandlerMockRecorder) GetShards(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetShards", reflect.TypeOf((*MockElasticsearchHandler)(nil).GetShards), arg0)
+}
+
+// GetShardsByIndex mocks base method.
+func (m *MockElasticsearchHandler) GetShardsByIndex(arg0 context.Context) (map[string][]eshandler.ShardInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetShardsByIndex", arg0)
+	ret0, _ := ret[0].(map[string][]eshandler.ShardInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetShardsByIndex indicates an expected call of GetShardsByIndex.
+func (mr *MockElasticsearchHandlerMockRecorder) GetShardsByIndex(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetShardsByIndex", reflect.TypeOf((*MockElasticsearchHandler)(nil).GetShardsByIndex), arg0)
+}
+
+// GetShardsByNode mocks base method.
+func (m *MockElasticsearchHandler) GetShardsByNode(arg0 context.Context) (map[string][]eshandler.ShardInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetShardsByNode", arg0)
+	ret0, _ := ret[0].(map[string][]eshandler.ShardInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetShardsByNode indicates an expected call of GetShardsByNode.
+func (mr *MockElasticsearchHandlerMockRecorder) GetShardsByNode(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetShardsByNode", reflect.TypeOf((*MockElasticsearchHandler)(nil).GetShardsByNode), arg0)
+}
+
+// GetVersion mocks base method.
+func (m *MockElasticsearchHandler) GetVersion(arg0 context.Context) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVersion", arg0)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVersion indicates an expected call of GetVersion.
+func (mr *MockElasticsearchHandlerMockRecorder) GetVersion(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVersion", reflect.TypeOf((*MockElasticsearchHandler)(nil).GetVersion), arg0)
+}
+
+// HasShardActivity mocks base method.
+func (m *MockElasticsearchHandler) HasShardActivity(arg0 context.Context) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasShardActivity", arg0)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HasShardActivity indicates an expected call of HasShardActivity.
+func (mr *MockElasticsearchHandlerMockRecorder) HasShardActivity(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasShardActivity", reflect.TypeOf((*MockElasticsearchHandler)(nil).HasShardActivity), arg0)
 }
 
 // ILMDelete mocks base method.
@@ -360,6 +627,21 @@ func (mr *MockElasticsearchHandlerMockRecorder) IngestPipelineUpdate(arg0, arg1 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IngestPipelineUpdate", reflect.TypeOf((*MockElasticsearchHandler)(nil).IngestPipelineUpdate), arg0, arg1)
 }
 
+// IsNodeInCluster mocks base method.
+func (m *MockElasticsearchHandler) IsNodeInCluster(arg0 context.Context, arg1 string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsNodeInCluster", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsNodeInCluster indicates an expected call of IsNodeInCluster.
+func (mr *MockElasticsearchHandlerMockRecorder) IsNodeInCluster(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsNodeInCluster", reflect.TypeOf((*MockElasticsearchHandler)(nil).IsNodeInCluster), arg0, arg1)
+}
+
 // LicenseDelete mocks base method.
 func (m *MockElasticsearchHandler) LicenseDelete() error {
 	m.ctrl.T.Helper()
@@ -429,6 +711,34 @@ func (m *MockElasticsearchHandler) LicenseUpdate(arg0 string) error {
 func (mr *MockElasticsearchHandlerMockRecorder) LicenseUpdate(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LicenseUpdate", reflect.TypeOf((*MockElasticsearchHandler)(nil).LicenseUpdate), arg0)
+}
+
+// PutNodeShutdown mocks base method.
+func (m *MockElasticsearchHandler) PutNodeShutdown(arg0 context.Context, arg1 string, arg2 eshandler.ShutdownType, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PutNodeShutdown", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PutNodeShutdown indicates an expected call of PutNodeShutdown.
+func (mr *MockElasticsearchHandlerMockRecorder) PutNodeShutdown(arg0, arg1, arg2, arg3 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutNodeShutdown", reflect.TypeOf((*MockElasticsearchHandler)(nil).PutNodeShutdown), arg0, arg1, arg2, arg3)
+}
+
+// RemoveTransientAllocationSettings mocks base method.
+func (m *MockElasticsearchHandler) RemoveTransientAllocationSettings() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveTransientAllocationSettings")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveTransientAllocationSettings indicates an expected call of RemoveTransientAllocationSettings.
+func (mr *MockElasticsearchHandlerMockRecorder) RemoveTransientAllocationSettings() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveTransientAllocationSettings", reflect.TypeOf((*MockElasticsearchHandler)(nil).RemoveTransientAllocationSettings))
 }
 
 // RoleDelete mocks base method.
@@ -673,6 +983,20 @@ func (m *MockElasticsearchHandler) SnapshotRepositoryUpdate(arg0 string, arg1 *a
 func (mr *MockElasticsearchHandlerMockRecorder) SnapshotRepositoryUpdate(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SnapshotRepositoryUpdate", reflect.TypeOf((*MockElasticsearchHandler)(nil).SnapshotRepositoryUpdate), arg0, arg1)
+}
+
+// SyncedFlush mocks base method.
+func (m *MockElasticsearchHandler) SyncedFlush(arg0 context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SyncedFlush", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SyncedFlush indicates an expected call of SyncedFlush.
+func (mr *MockElasticsearchHandlerMockRecorder) SyncedFlush(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SyncedFlush", reflect.TypeOf((*MockElasticsearchHandler)(nil).SyncedFlush), arg0)
 }
 
 // TransformDelete mocks base method.

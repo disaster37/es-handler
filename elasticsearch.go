@@ -1,6 +1,8 @@
 package eshandler
 
 import (
+	"context"
+
 	elasticsearch "github.com/disaster37/elasticsearch/v9"
 	esapi "github.com/disaster37/elasticsearch/v9/api"
 	localpatch "github.com/disaster37/es-handler/v9/patch"
@@ -93,6 +95,40 @@ type ElasticsearchHandler interface {
 	DisableRoutingRebalance() (err error)
 	EnableRoutingAllocation() (err error)
 	DisableRoutingAllocation() (err error)
+
+	// Transient settings
+	DisableReplicaShardsAllocationTransient() (err error)
+	EnableShardAllocationTransient() (err error)
+	DisableRoutingRebalanceTransient() (err error)
+	EnableRoutingRebalanceTransient() (err error)
+	RemoveTransientAllocationSettings() (err error)
+	GetClusterRoutingAllocation() (allocationEnable, rebalanceEnable string, err error)
+
+	// Cluster info
+	GetClusterInfo(ctx context.Context) (info *ClusterInfo, err error)
+	GetVersion(ctx context.Context) (version string, err error)
+
+	// Flush
+	Flush(ctx context.Context) (err error)
+	SyncedFlush(ctx context.Context) (err error)
+
+	// Node shutdown scope
+	PutNodeShutdown(ctx context.Context, nodeID string, shutdownType ShutdownType, reason string) (err error)
+	GetNodeShutdown(ctx context.Context, nodeID string) (shutdown *NodeShutdownInfo, err error)
+	GetAllNodeShutdowns(ctx context.Context) (shutdowns []NodeShutdownInfo, err error)
+	DeleteNodeShutdown(ctx context.Context, nodeID string) (err error)
+
+	// Node info scope
+	GetNodesInfo(ctx context.Context) (nodes map[string]NodeInfo, err error)
+	GetNodeNameToIDMap(ctx context.Context) (nameToID map[string]string, err error)
+	IsNodeInCluster(ctx context.Context, nodeName string) (exists bool, err error)
+
+	// Shard scope
+	GetShards(ctx context.Context) (shards []ShardInfo, err error)
+	GetShardsByNode(ctx context.Context) (shardsByNode map[string][]ShardInfo, err error)
+	GetShardsByIndex(ctx context.Context) (shardsByIndex map[string][]ShardInfo, err error)
+	HasShardActivity(ctx context.Context) (hasActivity bool, err error)
+	CountStartedReplicas(ctx context.Context, index, shard, excludeNode string) (total, started int, err error)
 
 	SetLogger(log *logrus.Entry)
 }
